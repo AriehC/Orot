@@ -4,9 +4,12 @@ import { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import FeedFilters from "@/components/feed/FeedFilters";
 import FeedStats from "@/components/feed/FeedStats";
+import FeaturedBoards from "@/components/boards/FeaturedBoards";
 import MasonryFeed from "@/components/feed/MasonryFeed";
 import CreateContentModal from "@/components/content/CreateContentModal";
 import BoardsSidebar from "@/components/boards/BoardsSidebar";
+import AddToBoardModal from "@/components/boards/AddToBoardModal";
+import BoardsContainingPostModal from "@/components/boards/BoardsContainingPostModal";
 import { useFeed } from "@/hooks/useFeed";
 import { useLike } from "@/hooks/useLike";
 import { useSave } from "@/hooks/useSave";
@@ -18,6 +21,8 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [showBoards, setShowBoards] = useState(false);
+  const [addToBoardPostId, setAddToBoardPostId] = useState<string | null>(null);
+  const [showBoardsForPostId, setShowBoardsForPostId] = useState<string | null>(null);
 
   const { posts, loading } = useFeed({
     search: searchQuery || undefined,
@@ -58,6 +63,14 @@ export default function HomePage() {
     handleSave(postId);
   }
 
+  function handleAddToBoard(postId: string) {
+    if (!user) {
+      toast("יש להתחבר כדי להוסיף ללוח");
+      return;
+    }
+    setAddToBoardPostId(postId);
+  }
+
   return (
     <>
       <Navbar
@@ -69,6 +82,7 @@ export default function HomePage() {
 
       <FeedFilters />
       <FeedStats />
+      <FeaturedBoards />
 
       <MasonryFeed
         posts={posts}
@@ -77,10 +91,18 @@ export default function HomePage() {
         isSaved={isSaved}
         onLike={handleLikeClick}
         onSave={handleSaveClick}
+        onAddToBoard={handleAddToBoard}
+        onShowBoards={setShowBoardsForPostId}
       />
 
       {showCreate && <CreateContentModal onClose={() => setShowCreate(false)} />}
       {showBoards && <BoardsSidebar onClose={() => setShowBoards(false)} />}
+      {addToBoardPostId && (
+        <AddToBoardModal postId={addToBoardPostId} onClose={() => setAddToBoardPostId(null)} />
+      )}
+      {showBoardsForPostId && (
+        <BoardsContainingPostModal postId={showBoardsForPostId} onClose={() => setShowBoardsForPostId(null)} />
+      )}
     </>
   );
 }
