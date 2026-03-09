@@ -1,0 +1,148 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Post } from "@/lib/types";
+import { formatNumber } from "@/lib/utils";
+import EditPostModal from "./EditPostModal";
+import styles from "./PostDetailModal.module.css";
+
+interface PostDetailModalProps {
+  post: Post;
+  currentUserId?: string;
+  isLiked: boolean;
+  isSaved: boolean;
+  onLike: (postId: string) => void;
+  onSave: (postId: string) => void;
+  onClose: () => void;
+}
+
+const TYPE_CONFIG = {
+  note: { label: "פתק", bg: "#FFF3E8", color: "#C17B4A" },
+  quote: { label: "ציטוט", bg: "#F0E8FF", color: "#9B7ED8" },
+  image: { label: "תמונה", bg: "#E8F5ED", color: "#5DA87E" },
+  video: { label: "וידאו", bg: "#E8F0F5", color: "#6B8FA3" },
+};
+
+export default function PostDetailModal({
+  post,
+  currentUserId,
+  isLiked,
+  isSaved,
+  onLike,
+  onSave,
+  onClose,
+}: PostDetailModalProps) {
+  const [showEdit, setShowEdit] = useState(false);
+  const [currentPost, setCurrentPost] = useState(post);
+  const typeConfig = TYPE_CONFIG[currentPost.type];
+  const isOwner = currentUserId === currentPost.authorId;
+
+  if (showEdit) {
+    return (
+      <EditPostModal
+        post={currentPost}
+        onClose={() => setShowEdit(false)}
+        onSaved={(updated) => {
+          setCurrentPost({ ...currentPost, ...updated });
+          setShowEdit(false);
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className={styles.overlay} onClick={onClose}>
+      <div
+        className={styles.card}
+        style={{ backgroundColor: currentPost.color || "#FFFFFF" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className={styles.closeBtn} onClick={onClose}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
+        {isOwner && (
+          <button className={styles.editBtn} onClick={() => setShowEdit(true)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            עריכה
+          </button>
+        )}
+
+        {currentPost.mediaURL && (currentPost.type === "image" || currentPost.type === "video") && (
+          <img
+            className={styles.media}
+            src={currentPost.mediaURL}
+            alt={currentPost.title}
+          />
+        )}
+
+        <div className={styles.body}>
+          <span
+            className={styles.typeBadge}
+            style={{ background: typeConfig.bg, color: typeConfig.color }}
+          >
+            {typeConfig.label}
+          </span>
+
+          <h2 className={styles.title}>{currentPost.title}</h2>
+
+          {currentPost.type === "quote" ? (
+            <p className={styles.quoteBody}>{currentPost.body}</p>
+          ) : (
+            <p className={styles.text}>{currentPost.body}</p>
+          )}
+
+          {currentPost.tags.length > 0 && (
+            <div className={styles.tags}>
+              {currentPost.tags.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/tags/${encodeURIComponent(tag)}`}
+                  className={styles.tag}
+                  onClick={onClose}
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          <div className={styles.footer}>
+            <Link
+              href={`/profile/${currentPost.authorId}`}
+              className={styles.author}
+              onClick={onClose}
+            >
+              {currentPost.authorName}
+            </Link>
+            <div className={styles.actions}>
+              <button
+                className={`${styles.actionBtn} ${isLiked ? styles.liked : ""}`}
+                onClick={() => onLike(currentPost.id)}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? "#E85D75" : "none"} stroke={isLiked ? "#E85D75" : "currentColor"} strokeWidth="2" strokeLinecap="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+                <span>{formatNumber(currentPost.likeCount + (isLiked ? 1 : 0))}</span>
+              </button>
+              <button
+                className={`${styles.actionBtn} ${isSaved ? styles.saved : ""}`}
+                onClick={() => onSave(currentPost.id)}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

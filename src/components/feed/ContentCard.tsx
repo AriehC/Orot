@@ -14,6 +14,7 @@ interface ContentCardProps {
   onSave: (postId: string) => void;
   onAddToBoard?: (postId: string) => void;
   onShowBoards?: (postId: string) => void;
+  onClick?: (post: Post) => void;
 }
 
 const TYPE_CONFIG = {
@@ -27,7 +28,7 @@ function isNewPost(createdAt: { toMillis: () => number }): boolean {
   return Date.now() - createdAt.toMillis() < 86400000;
 }
 
-export default function ContentCard({ post, index, isLiked, isSaved, onLike, onSave, onAddToBoard, onShowBoards }: ContentCardProps) {
+export default function ContentCard({ post, index, isLiked, isSaved, onLike, onSave, onAddToBoard, onShowBoards, onClick }: ContentCardProps) {
   const typeConfig = TYPE_CONFIG[post.type];
   const isNew = isNewPost(post.createdAt);
   const boardCount = post.boardCount || 0;
@@ -39,6 +40,7 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
         backgroundColor: post.color || "#FFFFFF",
         animationDelay: `${index * 0.06}s`,
       }}
+      onClick={() => onClick?.(post)}
     >
       {isNew && (
         <div className={styles.newBadge}>

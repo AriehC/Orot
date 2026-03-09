@@ -7,6 +7,7 @@ import FeedStats from "@/components/feed/FeedStats";
 import FeaturedBoards from "@/components/boards/FeaturedBoards";
 import MasonryFeed from "@/components/feed/MasonryFeed";
 import CreateContentModal from "@/components/content/CreateContentModal";
+import PostDetailModal from "@/components/content/PostDetailModal";
 import BoardsSidebar from "@/components/boards/BoardsSidebar";
 import AddToBoardModal from "@/components/boards/AddToBoardModal";
 import BoardsContainingPostModal from "@/components/boards/BoardsContainingPostModal";
@@ -14,6 +15,7 @@ import { useFeed } from "@/hooks/useFeed";
 import { useLike } from "@/hooks/useLike";
 import { useSave } from "@/hooks/useSave";
 import { useAuth } from "@/contexts/AuthContext";
+import { Post } from "@/lib/types";
 import toast from "react-hot-toast";
 
 export default function HomePage() {
@@ -23,6 +25,7 @@ export default function HomePage() {
   const [showBoards, setShowBoards] = useState(false);
   const [addToBoardPostId, setAddToBoardPostId] = useState<string | null>(null);
   const [showBoardsForPostId, setShowBoardsForPostId] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const { posts, loading } = useFeed({
     search: searchQuery || undefined,
@@ -93,6 +96,7 @@ export default function HomePage() {
         onSave={handleSaveClick}
         onAddToBoard={handleAddToBoard}
         onShowBoards={setShowBoardsForPostId}
+        onPostClick={setSelectedPost}
       />
 
       {showCreate && <CreateContentModal onClose={() => setShowCreate(false)} />}
@@ -102,6 +106,17 @@ export default function HomePage() {
       )}
       {showBoardsForPostId && (
         <BoardsContainingPostModal postId={showBoardsForPostId} onClose={() => setShowBoardsForPostId(null)} />
+      )}
+      {selectedPost && (
+        <PostDetailModal
+          post={selectedPost}
+          currentUserId={user?.uid}
+          isLiked={isLiked(selectedPost.id)}
+          isSaved={isSaved(selectedPost.id)}
+          onLike={handleLikeClick}
+          onSave={handleSaveClick}
+          onClose={() => setSelectedPost(null)}
+        />
       )}
     </>
   );

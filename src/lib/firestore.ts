@@ -140,6 +140,13 @@ export async function createPost(data: Omit<Post, "id" | "createdAt" | "updatedA
   return docRef.id;
 }
 
+export async function updatePost(
+  postId: string,
+  data: Partial<Pick<Post, "title" | "body" | "tags" | "color" | "type">>
+) {
+  await updateDoc(doc(db, "posts", postId), { ...data, updatedAt: Timestamp.now() });
+}
+
 export async function deletePost(postId: string) {
   await deleteDoc(doc(db, "posts", postId));
 }

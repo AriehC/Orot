@@ -15,6 +15,7 @@ interface MasonryFeedProps {
   onSave: (postId: string) => void;
   onAddToBoard?: (postId: string) => void;
   onShowBoards?: (postId: string) => void;
+  onPostClick?: (post: Post) => void;
 }
 
 const BREAKPOINT_COLS = {
@@ -46,6 +47,7 @@ export default function MasonryFeed({
   onSave,
   onAddToBoard,
   onShowBoards,
+  onPostClick,
 }: MasonryFeedProps) {
   if (loading) {
     return (
@@ -92,6 +94,7 @@ export default function MasonryFeed({
             onSave={onSave}
             onAddToBoard={onAddToBoard}
             onShowBoards={onShowBoards}
+            onClick={onPostClick}
           />
         ))}
       </Masonry>
