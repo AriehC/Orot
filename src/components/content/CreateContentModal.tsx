@@ -86,7 +86,7 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
         tags,
         color,
         mediaURL,
-        thumbnailURL: mediaURL, // For now, use same URL
+        thumbnailURL: mediaURL,
         mediaType,
       });
 

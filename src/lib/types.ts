@@ -9,6 +9,9 @@ export interface UserProfile {
   email: string;
   photoURL: string | null;
   bio: string;
+  mainBoardId: string | null;
+  followerCount: number;
+  followingCount: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -28,6 +31,7 @@ export interface Post {
   mediaType: "image" | "video" | null;
   likeCount: number;
   saveCount: number;
+  boardCount: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -38,8 +42,12 @@ export interface Board {
   description: string;
   color: string;
   ownerId: string;
+  ownerName: string;
+  ownerPhotoURL: string | null;
   isPublic: boolean;
   itemCount: number;
+  likeCount: number;
+  followerCount: number;
   coverImageURL: string | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -64,6 +72,27 @@ export interface Save {
   id: string;
   postId: string;
   userId: string;
+  createdAt: Timestamp;
+}
+
+export interface BoardLike {
+  id: string;
+  boardId: string;
+  userId: string;
+  createdAt: Timestamp;
+}
+
+export interface BoardFollow {
+  id: string;
+  boardId: string;
+  userId: string;
+  createdAt: Timestamp;
+}
+
+export interface UserFollow {
+  id: string;
+  followerId: string;
+  followingId: string;
   createdAt: Timestamp;
 }
 

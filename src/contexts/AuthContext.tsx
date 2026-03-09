@@ -12,6 +12,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { auth, db, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
+import { createBoard } from "@/lib/firestore";
 import { UserProfile } from "@/lib/types";
 
 interface AuthContextValue {
@@ -37,14 +38,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const snap = await getDoc(userRef);
 
     if (snap.exists()) {
-      return { id: snap.id, ...snap.data() } as UserProfile;
+      const data = snap.data();
+      return {
+        id: snap.id,
+        followerCount: 0,
+        followingCount: 0,
+        mainBoardId: null,
+        ...data,
+      } as UserProfile;
     }
 
+    const displayName = firebaseUser.displayName || "משתמש חדש";
+    const photoURL = firebaseUser.photoURL || null;
+
+    // Create default board for new user
+    const boardId = await createBoard({
+      name: "האוסף שלי",
+      description: "האוסף האישי שלי",
+      color: "#C17B4A",
+      ownerId: firebaseUser.uid,
+      ownerName: displayName,
+      ownerPhotoURL: photoURL,
+      isPublic: false,
+    });
+
     const newProfile: Omit<UserProfile, "id"> = {
-      displayName: firebaseUser.displayName || "משתמש חדש",
+      displayName,
       email: firebaseUser.email || "",
-      photoURL: firebaseUser.photoURL || null,
+      photoURL,
       bio: "",
+      mainBoardId: boardId,
+      followerCount: 0,
+      followingCount: 0,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     };

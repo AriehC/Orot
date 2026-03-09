@@ -13,7 +13,7 @@ import Navbar from "@/components/layout/Navbar";
 import Spinner from "@/components/ui/Spinner";
 import toast from "react-hot-toast";
 
-export default function BoardPage({ params }: { params: Promise<{ boardId: string }> }) {
+export default function BoardClient({ params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = use(params);
   const { user } = useAuth();
   const router = useRouter();

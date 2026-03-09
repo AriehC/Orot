@@ -27,7 +27,14 @@ import { UserProfile, Post, Board, BoardItem, Tag } from "./types";
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
   const snap = await getDoc(doc(db, "users", userId));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as UserProfile;
+  const data = snap.data();
+  return {
+    id: snap.id,
+    followerCount: 0,
+    followingCount: 0,
+    mainBoardId: null,
+    ...data,
+  } as UserProfile;
 }
 
 export async function updateUserProfile(userId: string, data: Partial<Omit<UserProfile, "id">>) {
@@ -58,7 +65,11 @@ export function subscribeToPosts(
   const q = query(collection(db, "posts"), ...constraints);
 
   return onSnapshot(q, (snapshot) => {
-    const posts = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Post);
+    const posts = snapshot.docs.map((d) => ({
+      id: d.id,
+      boardCount: 0,
+      ...d.data(),
+    }) as Post);
     callback(posts);
   });
 }
@@ -84,7 +95,11 @@ export async function getPostsPaginated(
 
   const q = query(collection(db, "posts"), ...constraints);
   const snapshot = await getDocs(q);
-  const posts = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Post);
+  const posts = snapshot.docs.map((d) => ({
+    id: d.id,
+    boardCount: 0,
+    ...d.data(),
+  }) as Post);
   const last = snapshot.docs[snapshot.docs.length - 1] || null;
 
   return { posts, lastDoc: last };
@@ -93,14 +108,15 @@ export async function getPostsPaginated(
 export async function getPost(postId: string): Promise<Post | null> {
   const snap = await getDoc(doc(db, "posts", postId));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as Post;
+  return { id: snap.id, boardCount: 0, ...snap.data() } as Post;
 }
 
-export async function createPost(data: Omit<Post, "id" | "createdAt" | "updatedAt" | "likeCount" | "saveCount">) {
+export async function createPost(data: Omit<Post, "id" | "createdAt" | "updatedAt" | "likeCount" | "saveCount" | "boardCount">) {
   const postData = {
     ...data,
     likeCount: 0,
     saveCount: 0,
+    boardCount: 0,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   };
@@ -209,10 +225,14 @@ export async function getUserSavedPosts(userId: string): Promise<Post[]> {
 
 // ─── Boards ───────────────────────────────────────────────────────────────
 
-export async function createBoard(data: Omit<Board, "id" | "createdAt" | "updatedAt" | "itemCount" | "coverImageURL">) {
+export async function createBoard(
+  data: Omit<Board, "id" | "createdAt" | "updatedAt" | "itemCount" | "coverImageURL" | "likeCount" | "followerCount">
+): Promise<string> {
   const boardData = {
     ...data,
     itemCount: 0,
+    likeCount: 0,
+    followerCount: 0,
     coverImageURL: null,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
@@ -221,20 +241,38 @@ export async function createBoard(data: Omit<Board, "id" | "createdAt" | "update
   return docRef.id;
 }
 
-export async function getUserBoards(userId: string): Promise<Board[]> {
-  const q = query(
-    collection(db, "boards"),
+export async function getUserBoards(userId: string, publicOnly = false): Promise<Board[]> {
+  const constraints: QueryConstraint[] = [
     where("ownerId", "==", userId),
-    orderBy("createdAt", "desc")
-  );
+  ];
+  if (publicOnly) {
+    constraints.push(where("isPublic", "==", true));
+  }
+  constraints.push(orderBy("createdAt", "desc"));
+
+  const q = query(collection(db, "boards"), ...constraints);
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Board);
+  return snap.docs.map((d) => ({
+    id: d.id,
+    likeCount: 0,
+    followerCount: 0,
+    ownerName: "",
+    ownerPhotoURL: null,
+    ...d.data(),
+  }) as Board);
 }
 
 export async function getBoard(boardId: string): Promise<Board | null> {
   const snap = await getDoc(doc(db, "boards", boardId));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as Board;
+  return {
+    id: snap.id,
+    likeCount: 0,
+    followerCount: 0,
+    ownerName: "",
+    ownerPhotoURL: null,
+    ...snap.data(),
+  } as Board;
 }
 
 export async function updateBoard(boardId: string, data: Partial<Omit<Board, "id">>) {
@@ -242,7 +280,6 @@ export async function updateBoard(boardId: string, data: Partial<Omit<Board, "id
 }
 
 export async function deleteBoard(boardId: string) {
-  // Delete all board items first
   const q = query(collection(db, "boardItems"), where("boardId", "==", boardId));
   const snap = await getDocs(q);
   const batch = writeBatch(db);
@@ -252,7 +289,6 @@ export async function deleteBoard(boardId: string) {
 }
 
 export async function addToBoard(boardId: string, postId: string, userId: string) {
-  // Check if already in board
   const q = query(
     collection(db, "boardItems"),
     where("boardId", "==", boardId),
@@ -267,7 +303,11 @@ export async function addToBoard(boardId: string, postId: string, userId: string
     addedBy: userId,
     addedAt: Timestamp.now(),
   });
-  await updateDoc(doc(db, "boards", boardId), { itemCount: increment(1) });
+
+  const batch = writeBatch(db);
+  batch.update(doc(db, "boards", boardId), { itemCount: increment(1), updatedAt: Timestamp.now() });
+  batch.update(doc(db, "posts", postId), { boardCount: increment(1) });
+  await batch.commit();
 }
 
 export async function removeFromBoard(boardId: string, postId: string) {
@@ -278,8 +318,11 @@ export async function removeFromBoard(boardId: string, postId: string) {
   );
   const snap = await getDocs(q);
   if (!snap.empty) {
-    await deleteDoc(snap.docs[0].ref);
-    await updateDoc(doc(db, "boards", boardId), { itemCount: increment(-1) });
+    const batch = writeBatch(db);
+    batch.delete(snap.docs[0].ref);
+    batch.update(doc(db, "boards", boardId), { itemCount: increment(-1), updatedAt: Timestamp.now() });
+    batch.update(doc(db, "posts", postId), { boardCount: increment(-1) });
+    await batch.commit();
   }
 }
 
@@ -302,6 +345,152 @@ export async function getBoardItemPostIds(boardId: string): Promise<Set<string>>
   const q = query(collection(db, "boardItems"), where("boardId", "==", boardId));
   const snap = await getDocs(q);
   return new Set(snap.docs.map((d) => d.data().postId));
+}
+
+// ─── Board Likes ──────────────────────────────────────────────────────────
+
+export async function toggleBoardLike(boardId: string, userId: string): Promise<boolean> {
+  const q = query(
+    collection(db, "boardLikes"),
+    where("boardId", "==", boardId),
+    where("userId", "==", userId)
+  );
+  const snap = await getDocs(q);
+
+  if (snap.empty) {
+    await addDoc(collection(db, "boardLikes"), {
+      boardId,
+      userId,
+      createdAt: Timestamp.now(),
+    });
+    await updateDoc(doc(db, "boards", boardId), { likeCount: increment(1) });
+    return true;
+  } else {
+    await deleteDoc(snap.docs[0].ref);
+    await updateDoc(doc(db, "boards", boardId), { likeCount: increment(-1) });
+    return false;
+  }
+}
+
+export async function getUserLikedBoardIds(userId: string): Promise<Set<string>> {
+  const q = query(collection(db, "boardLikes"), where("userId", "==", userId));
+  const snap = await getDocs(q);
+  return new Set(snap.docs.map((d) => d.data().boardId));
+}
+
+// ─── Board Follows ────────────────────────────────────────────────────────
+
+export async function toggleBoardFollow(boardId: string, userId: string): Promise<boolean> {
+  const q = query(
+    collection(db, "boardFollows"),
+    where("boardId", "==", boardId),
+    where("userId", "==", userId)
+  );
+  const snap = await getDocs(q);
+
+  if (snap.empty) {
+    await addDoc(collection(db, "boardFollows"), {
+      boardId,
+      userId,
+      createdAt: Timestamp.now(),
+    });
+    await updateDoc(doc(db, "boards", boardId), { followerCount: increment(1) });
+    return true;
+  } else {
+    await deleteDoc(snap.docs[0].ref);
+    await updateDoc(doc(db, "boards", boardId), { followerCount: increment(-1) });
+    return false;
+  }
+}
+
+export async function getUserFollowedBoardIds(userId: string): Promise<Set<string>> {
+  const q = query(collection(db, "boardFollows"), where("userId", "==", userId));
+  const snap = await getDocs(q);
+  return new Set(snap.docs.map((d) => d.data().boardId));
+}
+
+// ─── User Follows ─────────────────────────────────────────────────────────
+
+export async function toggleUserFollow(targetUserId: string, followerId: string): Promise<boolean> {
+  const q = query(
+    collection(db, "userFollows"),
+    where("followingId", "==", targetUserId),
+    where("followerId", "==", followerId)
+  );
+  const snap = await getDocs(q);
+
+  if (snap.empty) {
+    await addDoc(collection(db, "userFollows"), {
+      followingId: targetUserId,
+      followerId,
+      createdAt: Timestamp.now(),
+    });
+    const batch = writeBatch(db);
+    batch.update(doc(db, "users", targetUserId), { followerCount: increment(1) });
+    batch.update(doc(db, "users", followerId), { followingCount: increment(1) });
+    await batch.commit();
+    return true;
+  } else {
+    await deleteDoc(snap.docs[0].ref);
+    const batch = writeBatch(db);
+    batch.update(doc(db, "users", targetUserId), { followerCount: increment(-1) });
+    batch.update(doc(db, "users", followerId), { followingCount: increment(-1) });
+    await batch.commit();
+    return false;
+  }
+}
+
+export async function isFollowingUser(targetUserId: string, followerId: string): Promise<boolean> {
+  const q = query(
+    collection(db, "userFollows"),
+    where("followingId", "==", targetUserId),
+    where("followerId", "==", followerId)
+  );
+  const snap = await getDocs(q);
+  return !snap.empty;
+}
+
+// ─── Public Boards ────────────────────────────────────────────────────────
+
+export async function getPublicBoards(sortBy: "popular" | "recent" = "popular", limitCount = 20): Promise<Board[]> {
+  const constraints: QueryConstraint[] = [
+    where("isPublic", "==", true),
+  ];
+
+  if (sortBy === "popular") {
+    constraints.push(orderBy("followerCount", "desc"));
+  } else {
+    constraints.push(orderBy("createdAt", "desc"));
+  }
+
+  constraints.push(limit(limitCount));
+
+  const q = query(collection(db, "boards"), ...constraints);
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({
+    id: d.id,
+    likeCount: 0,
+    followerCount: 0,
+    ownerName: "",
+    ownerPhotoURL: null,
+    ...d.data(),
+  }) as Board);
+}
+
+export async function getPublicBoardsContainingPost(postId: string): Promise<Board[]> {
+  const q = query(
+    collection(db, "boardItems"),
+    where("postId", "==", postId)
+  );
+  const snap = await getDocs(q);
+  const boardIds = [...new Set(snap.docs.map((d) => d.data().boardId))];
+
+  const boards: Board[] = [];
+  for (const boardId of boardIds) {
+    const board = await getBoard(boardId);
+    if (board && board.isPublic) boards.push(board);
+  }
+  return boards;
 }
 
 // ─── Tags ─────────────────────────────────────────────────────────────────
@@ -332,7 +521,7 @@ export async function getTrendingTags(maxResults = 15): Promise<Tag[]> {
 
 export async function getFeedStats(): Promise<{ postCount: number; newCount: number; boardCount: number; totalLikes: number }> {
   const postsSnap = await getDocs(collection(db, "posts"));
-  const boardsSnap = await getDocs(collection(db, "boards"));
+  const boardsSnap = await getDocs(query(collection(db, "boards"), where("isPublic", "==", true)));
 
   let totalLikes = 0;
   let newCount = 0;

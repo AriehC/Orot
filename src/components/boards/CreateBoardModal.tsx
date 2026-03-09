@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createBoard } from "@/lib/firestore";
-import { Board } from "@/lib/types";
+import type { Board } from "@/lib/types";
 import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 import styles from "@/components/content/CreateContentModal.module.css";
@@ -33,6 +33,8 @@ export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModa
         description: description.trim(),
         color,
         ownerId: user.uid,
+        ownerName: user.displayName || "",
+        ownerPhotoURL: user.photoURL || null,
         isPublic,
       });
 
