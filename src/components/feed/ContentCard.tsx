@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Post } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import styles from "./ContentCard.module.css";
@@ -82,7 +83,7 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
         {post.tags.length > 0 && (
           <div className={styles.tags}>
             {post.tags.map((tag) => (
-              <span key={tag} className={styles.tag}>#{tag}</span>
+              <Link key={tag} href={`/tags/${encodeURIComponent(tag)}`} className={styles.tag} onClick={(e) => e.stopPropagation()}>#{tag}</Link>
             ))}
           </div>
         )}

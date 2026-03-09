@@ -16,12 +16,10 @@ import toast from "react-hot-toast";
 export default function HomePage() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showBoards, setShowBoards] = useState(false);
 
   const { posts, loading } = useFeed({
-    tag: activeTag || undefined,
     search: searchQuery || undefined,
   });
 
@@ -69,7 +67,7 @@ export default function HomePage() {
         onBoardsClick={handleBoardsClick}
       />
 
-      <FeedFilters activeTag={activeTag} onTagChange={setActiveTag} />
+      <FeedFilters />
       <FeedStats />
 
       <MasonryFeed

@@ -1,38 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Tag } from "@/lib/types";
 import { getTrendingTags } from "@/lib/firestore";
 import styles from "./FeedFilters.module.css";
 
-interface FeedFiltersProps {
-  activeTag: string | null;
-  onTagChange: (tag: string | null) => void;
-}
-
-export default function FeedFilters({ activeTag, onTagChange }: FeedFiltersProps) {
+export default function FeedFilters() {
   const [tags, setTags] = useState<Tag[]>([]);
 
   useEffect(() => {
     getTrendingTags(12).then(setTags).catch(() => {});
   }, []);
 
+  if (tags.length === 0) return null;
+
   return (
     <div className={styles.bar}>
-      <button
-        className={!activeTag ? styles.chipActive : styles.chip}
-        onClick={() => onTagChange(null)}
-      >
-        ✦ הכל
-      </button>
       {tags.map((tag) => (
-        <button
+        <Link
           key={tag.name}
-          className={activeTag === tag.name ? styles.chipActive : styles.chip}
-          onClick={() => onTagChange(activeTag === tag.name ? null : tag.name)}
+          href={`/tags/${encodeURIComponent(tag.name)}`}
+          className={styles.chip}
         >
-          {tag.name}
-        </button>
+          #{tag.name}
+        </Link>
       ))}
     </div>
   );

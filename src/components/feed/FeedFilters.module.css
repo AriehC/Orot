@@ -24,22 +24,11 @@
   transition: var(--transition);
   white-space: nowrap;
   font-weight: 500;
+  text-decoration: none;
 }
 
 .chip:hover {
-  border-color: var(--accent-soft);
-  color: var(--text);
-}
-
-.chipActive {
-  composes: chip;
-  background: var(--accent);
-  color: white;
   border-color: var(--accent);
-}
-
-.chipActive:hover {
-  background: var(--accent-dark);
-  color: white;
-  border-color: var(--accent-dark);
+  color: var(--accent);
+  background: var(--accent-glow);
 }
