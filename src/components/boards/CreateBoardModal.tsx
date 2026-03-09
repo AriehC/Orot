@@ -16,7 +16,7 @@ interface CreateBoardModalProps {
 }
 
 export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModalProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(true);
@@ -33,20 +33,24 @@ export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModa
         description: description.trim(),
         color,
         ownerId: user.uid,
-        ownerName: user.displayName || "",
-        ownerPhotoURL: user.photoURL || null,
+        ownerName: profile?.displayName || "משתמש",
+        ownerPhotoURL: profile?.photoURL || null,
         isPublic,
       });
 
-      toast("הלוח נוצר בהצלחה ✨");
+      toast("הלוח נוצר בהצלחה");
       onCreated({
         id: boardId,
         name: name.trim(),
         description: description.trim(),
         color,
         ownerId: user.uid,
+        ownerName: profile?.displayName || "משתמש",
+        ownerPhotoURL: profile?.photoURL || null,
         isPublic,
         itemCount: 0,
+        likeCount: 0,
+        followerCount: 0,
         coverImageURL: null,
       } as Board);
     } catch {

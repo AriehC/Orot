@@ -1,0 +1,216 @@
+.container {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-padding);
+}
+
+.header {
+  padding: 24px 0 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: white;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: var(--transition);
+  margin-bottom: 16px;
+}
+
+.backBtn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-soft);
+}
+
+.boardInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.colorDot {
+  width: 8px;
+  height: 48px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.titleArea {
+  flex: 1;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.title {
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.privateBadge {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.ownerLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  transition: var(--transition-fast);
+}
+
+.ownerLink:hover {
+  color: var(--accent);
+}
+
+.ownerAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.ownerInitial {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9B7ED8, #C17B4A);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.likeBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.likeBtn:hover {
+  border-color: #E85D75;
+  background: rgba(232, 93, 117, 0.06);
+}
+
+.liked {
+  border-color: #E85D75;
+  background: rgba(232, 93, 117, 0.08);
+}
+
+.followBtn {
+  padding: 8px 20px;
+  border: 1.5px solid var(--accent-soft);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.followBtn:hover {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+}
+
+.following {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.following:hover {
+  opacity: 0.9;
+  background: var(--accent);
+  color: white;
+}
+
+.visibilityBtn {
+  padding: 8px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: white;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.visibilityBtn:hover {
+  background: var(--bg-secondary);
+}
+
+@media (max-width: 600px) {
+  .boardInfo {
+    flex-direction: column;
+  }
+
+  .colorDot {
+    width: 48px;
+    height: 6px;
+  }
+
+  .meta {
+    gap: 10px;
+  }
+
+  .headerActions {
+    flex-wrap: wrap;
+  }
+}

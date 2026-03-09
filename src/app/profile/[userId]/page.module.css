@@ -72,6 +72,13 @@
   color: var(--text-secondary);
 }
 
+.headerActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .editBtn {
   padding: 8px 20px;
   border: 1.5px solid var(--accent-soft);
@@ -89,6 +96,37 @@
 .editBtn:hover {
   background: var(--accent-glow);
   border-color: var(--accent);
+}
+
+.followBtn {
+  padding: 8px 24px;
+  border: 1.5px solid var(--accent-soft);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.followBtn:hover {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+}
+
+.followingBtn {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.followingBtn:hover {
+  opacity: 0.9;
+  background: var(--accent);
+  color: white;
 }
 
 /* Tabs */

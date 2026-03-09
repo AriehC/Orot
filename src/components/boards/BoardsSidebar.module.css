@@ -80,6 +80,20 @@
   color: var(--text-secondary);
 }
 
+.mainBoard {
+  position: relative;
+}
+
+.mainBadge {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--accent-gradient);
+  color: white;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 .boardMeta {
   display: flex;
   align-items: center;
@@ -117,4 +131,25 @@
 .newBoardBtn:hover {
   background: var(--accent-glow);
   border-color: var(--accent);
+}
+
+.discoverLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.discoverLink:hover {
+  background: var(--accent-glow);
+  color: var(--accent);
 }
