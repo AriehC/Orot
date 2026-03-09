@@ -1,0 +1,50 @@
+.container {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 8px var(--page-padding) 60px;
+}
+
+.masonry {
+  display: flex;
+  margin-inline-start: -18px;
+  width: auto;
+}
+
+.masonryColumn {
+  padding-inline-start: 18px;
+  background-clip: padding-box;
+}
+
+/* Skeleton */
+.skeleton {
+  break-inside: avoid;
+  margin-bottom: 18px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.skeletonImage {
+  height: 180px;
+  background: linear-gradient(90deg, var(--bg-secondary), var(--bg), var(--bg-secondary));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease infinite;
+}
+
+.skeletonBody {
+  padding: 16px;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--bg-secondary), var(--bg), var(--bg-secondary));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease infinite;
+  margin-bottom: 8px;
+}
+
+.skeletonLine:last-child {
+  width: 60%;
+}

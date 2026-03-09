@@ -1,0 +1,206 @@
+"use client";
+
+import { useState, useRef, KeyboardEvent } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { createPost } from "@/lib/firestore";
+import { uploadMedia } from "@/lib/storage";
+import { PostType } from "@/lib/types";
+import Modal from "@/components/ui/Modal";
+import toast from "react-hot-toast";
+import styles from "./CreateContentModal.module.css";
+
+interface CreateContentModalProps {
+  onClose: () => void;
+}
+
+const COLORS = ["#FFF8F0", "#F0F4F8", "#F5F0FF", "#F0FFF5", "#FFF5F5", "#FFFBF0"];
+
+const TYPE_OPTIONS: { key: PostType; label: string }[] = [
+  { key: "note", label: "פתק" },
+  { key: "quote", label: "ציטוט" },
+  { key: "image", label: "תמונה" },
+  { key: "video", label: "וידאו" },
+];
+
+export default function CreateContentModal({ onClose }: CreateContentModalProps) {
+  const { user, profile } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [type, setType] = useState<PostType>("note");
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const [color, setColor] = useState(COLORS[0]);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  function handleTagKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+      e.preventDefault();
+      const newTag = tagInput.trim().replace(",", "");
+      if (newTag && !tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+      }
+      setTagInput("");
+    }
+    if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+      setTags(tags.slice(0, -1));
+    }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMediaFile(file);
+    setMediaPreview(URL.createObjectURL(file));
+  }
+
+  function removeMedia() {
+    setMediaFile(null);
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+    setMediaPreview(null);
+  }
+
+  async function handleSubmit() {
+    if (!user || !profile || !title.trim()) return;
+    setSubmitting(true);
+
+    try {
+      let mediaURL: string | null = null;
+      let mediaType: "image" | "video" | null = null;
+
+      if (mediaFile) {
+        mediaURL = await uploadMedia(user.uid, mediaFile);
+        mediaType = mediaFile.type.startsWith("video/") ? "video" : "image";
+      }
+
+      await createPost({
+        type,
+        title: title.trim(),
+        body: body.trim(),
+        authorId: user.uid,
+        authorName: profile.displayName,
+        authorPhotoURL: profile.photoURL,
+        tags,
+        color,
+        mediaURL,
+        thumbnailURL: mediaURL, // For now, use same URL
+        mediaType,
+      });
+
+      toast("הפתק נוצר בהצלחה ✨");
+      onClose();
+    } catch {
+      toast.error("שגיאה ביצירת הפתק");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Modal title="יצירת תוכן חדש" onClose={onClose}>
+      <div className={styles.formGroup}>
+        <label>סוג תוכן</label>
+        <div className={styles.typeSelector}>
+          {TYPE_OPTIONS.map((t) => (
+            <button
+              key={t.key}
+              className={type === t.key ? styles.typeBtnActive : styles.typeBtn}
+              onClick={() => setType(t.key)}
+              type="button"
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>כותרת</label>
+        <input
+          placeholder="מה ההשראה?"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>תוכן</label>
+        <textarea
+          placeholder="שתפו את המחשבה, הציטוט, או התובנה שלכם..."
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>תגיות</label>
+        <div className={styles.tagsContainer} onClick={() => document.getElementById("tagInput")?.focus()}>
+          {tags.map((tag) => (
+            <span key={tag} className={styles.tagChip}>
+              #{tag}
+              <button className={styles.tagRemove} onClick={() => setTags(tags.filter((t) => t !== tag))} type="button">
+                ×
+              </button>
+            </span>
+          ))}
+          <input
+            id="tagInput"
+            className={styles.tagInput}
+            placeholder={tags.length === 0 ? "הוסיפו תגיות (Enter להוספה)" : ""}
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleTagKeyDown}
+          />
+        </div>
+      </div>
+
+      {(type === "image" || type === "video") && (
+        <div className={styles.formGroup}>
+          <label>מדיה</label>
+          {mediaPreview ? (
+            <div className={styles.uploadPreview}>
+              <img src={mediaPreview} alt="תצוגה מקדימה" />
+              <button className={styles.removeMedia} onClick={removeMedia} type="button">×</button>
+            </div>
+          ) : (
+            <div className={styles.uploadZone} onClick={() => fileInputRef.current?.click()}>
+              📎 לחצו להעלאת {type === "video" ? "וידאו" : "תמונה"}
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={type === "video" ? "video/*" : "image/*"}
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+          />
+        </div>
+      )}
+
+      <div className={styles.formGroup}>
+        <label>צבע</label>
+        <div className={styles.colorPicker}>
+          {COLORS.map((c) => (
+            <div
+              key={c}
+              className={color === c ? styles.colorDotActive : styles.colorDot}
+              style={{ backgroundColor: c }}
+              onClick={() => setColor(c)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <button
+        className={styles.submitBtn}
+        onClick={handleSubmit}
+        disabled={submitting || !title.trim()}
+      >
+        {submitting ? "מפרסם..." : "✨ פרסום"}
+      </button>
+    </Modal>
+  );
+}

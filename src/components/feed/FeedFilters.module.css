@@ -1,0 +1,45 @@
+.bar {
+  display: flex;
+  gap: 8px;
+  padding: 16px var(--page-padding);
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.bar::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  padding: 7px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: white;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.chip:hover {
+  border-color: var(--accent-soft);
+  color: var(--text);
+}
+
+.chipActive {
+  composes: chip;
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.chipActive:hover {
+  background: var(--accent-dark);
+  color: white;
+  border-color: var(--accent-dark);
+}

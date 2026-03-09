@@ -1,0 +1,74 @@
+import { Timestamp } from "firebase/firestore";
+
+export type PostType = "note" | "quote" | "image" | "video";
+export type FeedSort = "trending" | "recent" | "random";
+
+export interface UserProfile {
+  id: string;
+  displayName: string;
+  email: string;
+  photoURL: string | null;
+  bio: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Post {
+  id: string;
+  type: PostType;
+  title: string;
+  body: string;
+  authorId: string;
+  authorName: string;
+  authorPhotoURL: string | null;
+  tags: string[];
+  color: string | null;
+  mediaURL: string | null;
+  thumbnailURL: string | null;
+  mediaType: "image" | "video" | null;
+  likeCount: number;
+  saveCount: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Board {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  ownerId: string;
+  isPublic: boolean;
+  itemCount: number;
+  coverImageURL: string | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface BoardItem {
+  id: string;
+  boardId: string;
+  postId: string;
+  addedBy: string;
+  addedAt: Timestamp;
+}
+
+export interface Like {
+  id: string;
+  postId: string;
+  userId: string;
+  createdAt: Timestamp;
+}
+
+export interface Save {
+  id: string;
+  postId: string;
+  userId: string;
+  createdAt: Timestamp;
+}
+
+export interface Tag {
+  name: string;
+  postCount: number;
+  lastUsedAt: Timestamp;
+}
