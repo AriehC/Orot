@@ -15,9 +15,13 @@
   transform: translateY(-3px);
 }
 
-/* Dark mode: overlay the card to darken pastel backgrounds */
+/* Dark mode */
 :global([data-theme="dark"]) .card {
   background-color: var(--card-bg) !important;
+}
+
+:global([data-theme="dark"]) .typeBadge {
+  background: var(--bg-secondary) !important;
 }
 
 /* Image */

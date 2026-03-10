@@ -68,15 +68,15 @@
   gap: 6px;
   cursor: pointer;
   z-index: 2;
-}
-
-:global([data-theme="dark"]) .editBtn {
-  background: rgba(42, 43, 69, 0.85);
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   color: var(--accent);
   transition: var(--transition-fast);
+}
+
+:global([data-theme="dark"]) .editBtn {
+  background: rgba(42, 43, 69, 0.85);
 }
 
 .editBtn:hover {
@@ -103,6 +103,10 @@
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 12px;
+}
+
+:global([data-theme="dark"]) .typeBadge {
+  background: var(--bg-secondary) !important;
 }
 
 .title {

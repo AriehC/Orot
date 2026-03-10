@@ -32,3 +32,13 @@
   color: var(--accent);
   background: var(--accent-glow);
 }
+
+.discoverChip {
+  composes: chip;
+  border-color: var(--border-accent);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
