@@ -15,6 +15,7 @@ import { useFeed } from "@/hooks/useFeed";
 import { useLike } from "@/hooks/useLike";
 import { useSave } from "@/hooks/useSave";
 import { useAuth } from "@/contexts/AuthContext";
+import { getRandomPost } from "@/lib/firestore";
 import { Post } from "@/lib/types";
 import toast from "react-hot-toast";
 
@@ -26,6 +27,8 @@ export default function HomePage() {
   const [addToBoardPostId, setAddToBoardPostId] = useState<string | null>(null);
   const [showBoardsForPostId, setShowBoardsForPostId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+
+  const [seenRandomIds, setSeenRandomIds] = useState<Set<string>>(new Set());
 
   const { posts, loading } = useFeed({
     search: searchQuery || undefined,
@@ -66,6 +69,16 @@ export default function HomePage() {
     handleSave(postId);
   }
 
+  async function handleDiscover() {
+    const post = await getRandomPost(seenRandomIds);
+    if (post) {
+      setSeenRandomIds((prev) => new Set(prev).add(post.id));
+      setSelectedPost(post);
+    } else {
+      toast("אין עוד תוכן לגלות");
+    }
+  }
+
   function handleAddToBoard(postId: string) {
     if (!user) {
       toast("יש להתחבר כדי להוסיף ללוח");
@@ -84,6 +97,49 @@ export default function HomePage() {
       />
 
       <FeedFilters />
+
+      <div style={{
+        maxWidth: "var(--content-max-width)",
+        margin: "0 auto",
+        padding: "0 var(--page-padding)",
+        display: "flex",
+        justifyContent: "center",
+        marginBottom: "16px",
+      }}>
+        <button
+          onClick={handleDiscover}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "10px 24px",
+            border: "1.5px solid var(--border-accent)",
+            borderRadius: "var(--radius-full)",
+            background: "transparent",
+            color: "var(--accent)",
+            fontFamily: "inherit",
+            fontSize: "14px",
+            fontWeight: 600,
+            cursor: "pointer",
+            transition: "var(--transition)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--accent-glow)";
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+          </svg>
+          גלה משהו חדש
+        </button>
+      </div>
+
       <FeedStats />
       <FeaturedBoards />
 

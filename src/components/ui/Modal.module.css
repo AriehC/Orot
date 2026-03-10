@@ -16,7 +16,7 @@
   max-width: 100%;
   max-height: 85vh;
   overflow-y: auto;
-  background: white;
+  background: var(--card-bg);
   border-radius: var(--radius-lg);
   animation: scaleIn 0.3s ease;
   box-shadow: var(--shadow-xl);

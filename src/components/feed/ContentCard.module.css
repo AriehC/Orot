@@ -15,6 +15,11 @@
   transform: translateY(-3px);
 }
 
+/* Dark mode: overlay the card to darken pastel backgrounds */
+:global([data-theme="dark"]) .card {
+  background-color: var(--card-bg) !important;
+}
+
 /* Image */
 .cardImage {
   width: 100%;

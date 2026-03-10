@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(250, 246, 241, 0.85);
+  background: var(--nav-bg);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
   padding: 0 var(--page-padding);
@@ -66,7 +66,7 @@
 
 .searchInput:focus {
   border-color: var(--accent-soft);
-  background: white;
+  background: var(--search-focus-bg);
   box-shadow: 0 4px 16px rgba(193, 123, 74, 0.1);
 }
 
@@ -151,6 +151,27 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.themeBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.themeBtn:hover {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: var(--accent-soft);
 }
 
 @media (max-width: 800px) {

@@ -11,7 +11,7 @@
   padding: 8px 12px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  background: white;
+  background: var(--card-bg);
   display: flex;
   align-items: center;
   gap: 6px;

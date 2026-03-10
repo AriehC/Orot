@@ -21,7 +21,7 @@
   margin-bottom: 18px;
   border-radius: var(--radius);
   overflow: hidden;
-  background: white;
+  background: var(--card-bg);
   box-shadow: var(--shadow-sm);
 }
 

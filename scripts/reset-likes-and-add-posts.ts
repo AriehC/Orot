@@ -1,15 +1,14 @@
 /**
- * Seed script for Orot
- * Run: npx tsx scripts/seed.ts
- *
- * Requires .env.local to be configured with Firebase credentials.
- * Creates sample posts and tags in Firestore.
+ * One-time migration: reset fake likes on seed posts + add new posts
+ * Run: npx tsx scripts/reset-likes-and-add-posts.ts
  */
 
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, doc, setDoc, Timestamp } from "firebase/firestore";
+import {
+  getFirestore, collection, addDoc, doc, setDoc, getDocs,
+  query, where, updateDoc, Timestamp, writeBatch,
+} from "firebase/firestore";
 
-// Load env vars
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
@@ -26,161 +25,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const SEED_USER_ID = "seed-user";
-const SEED_USER = {
-  displayName: "אורות",
-  email: "orot@example.com",
-  photoURL: null,
-  bio: "תוכן לדוגמה לפלטפורמת אורות",
-  createdAt: Timestamp.now(),
-  updatedAt: Timestamp.now(),
-};
 
 function hoursAgo(h: number): Timestamp {
   return Timestamp.fromMillis(Date.now() - h * 3600000);
 }
 
-const SAMPLE_POSTS = [
-  {
-    type: "note",
-    title: "כל נשמה ומסעה",
-    body: "לעיתים קשה לספוק, כל נשמה ומסלולה. אין תחרות באמת — רק צריך להקשיב.",
-    tags: ["חוכמה", "נשמה"],
-    author: "נועה",
-    color: "#FFF8F0",
-    createdAt: hoursAgo(72),
-  },
-  {
-    type: "quote",
-    title: "רומי",
-    body: "הפצע הוא המקום שבו האור נכנס אליך.",
-    tags: ["רומי", "ריפוי", "אור"],
-    author: "רומי",
-    color: "#F5F0FF",
-    createdAt: hoursAgo(168),
-  },
-  {
-    type: "image",
-    title: "זריחה מהרי הגולן",
-    body: "כל בוקר הוא הזדמנות חדשה לראות את העולם מחדש. הטבע מזכיר לנו שתמיד יש אור מעבר לחושך.",
-    tags: ["טבע", "זריחה", "השראה"],
-    author: "אלון",
-    color: "#F0FFF5",
-    mediaURL: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop",
-    createdAt: hoursAgo(48),
-  },
-  {
-    type: "note",
-    title: "תרגול יצירת תודה",
-    body: "כל ערב לפני השינה, כתבו 3 דברים שאתם מסודרי תודה עליהם. זה משנה את החיים תוך 21 יום.",
-    tags: ["תודה", "תרגול", "הרגלים"],
-    author: "דנה",
-    color: "#FFFBF0",
-    createdAt: hoursAgo(5),
-  },
-  {
-    type: "video",
-    title: "מדיטציות בוקר — 10 דקות",
-    body: "מדיטציה מודרכת להתחלת היום. נשימות עמוקות, הרפיה, ומודעות נעימה.",
-    tags: ["מדיטציה", "בוקר", "נשימה"],
-    author: "שרון על השביל",
-    color: "#F0F4F8",
-    mediaURL: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&h=250&fit=crop",
-    createdAt: hoursAgo(120),
-  },
-  {
-    type: "note",
-    title: "שחררו את מה שלא שלכם",
-    body: "לא כל מחשבה שעולה היא שלך. למדו להיות נוכחים בלי להיצמד לכל רעש פנימי.",
-    tags: ["מיינדפולנס", "גוף ונפש"],
-    author: "מאירה",
-    color: "#FFF5F5",
-    createdAt: hoursAgo(2),
-  },
-  {
-    type: "image",
-    title: "מנדלה של שלום פנימי",
-    body: "ציורי מנדלות כמו מדיטציה בפני עצמה. התיקדמות והיפנוס הדרגתי שמרגיע את הנפש.",
-    tags: ["ריפוי", "אומנות", "מנדלה"],
-    author: "תמר",
-    color: "#F5F0FF",
-    mediaURL: "https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=400&h=300&fit=crop",
-    createdAt: hoursAgo(96),
-  },
-  {
-    type: "quote",
-    title: "טיך נאט האן",
-    body: "אין דרך אל השלום. השלום הוא הדרך.",
-    tags: ["שלום", "חוכמה", "בודהיזם"],
-    author: "טיך נאט האן",
-    color: "#F0FFF5",
-    createdAt: hoursAgo(240),
-  },
-  {
-    type: "note",
-    title: "נשימת 4-7-8",
-    body: "שאפו 4 שניות, החזיקו 7 שניות, נשפו 8 שניות. חזרו 4 פעמים. טכניקה פשוטה להפעלת מערכת העצבים הפרסימפתטית.",
-    tags: ["מדיטציה", "נשימה", "טכניקה"],
-    author: "ד״ר אנדרו וייל",
-    color: "#F0F4F8",
-    createdAt: hoursAgo(144),
-  },
-  {
-    type: "note",
-    title: "אהבה ללא תנאי",
-    body: "אהבה אמיתית לא דורשת שינוי מהאחר. היא פשוטה להיות, כמו נהר שזורם בלי מאמץ.",
-    tags: ["אהבה", "זוגיות"],
-    author: "גיל",
-    color: "#FFF5F5",
-    createdAt: hoursAgo(1),
-  },
-  {
-    type: "image",
-    title: "היער הקסום",
-    body: "הליכה ביער היא כטיפול נפשי. העצים מלמדים אותנו על שורשים ועל צמיחה.",
-    tags: ["טבע", "יער", "ריפוי"],
-    author: "נוי",
-    color: "#F0FFF5",
-    mediaURL: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&h=300&fit=crop",
-    createdAt: hoursAgo(192),
-  },
-  {
-    type: "video",
-    title: "צלילי טיבט — קערות שירה",
-    body: "30 דקות של צלילים קדושים לריפוי עמוק ומדיטציה.",
-    tags: ["ריפוי", "מוזיקה", "טיבט"],
-    author: "Sound Healing IL",
-    color: "#FFFBF0",
-    mediaURL: "https://images.unsplash.com/photo-1591710668263-80ff87939530?w=400&h=250&fit=crop",
-    createdAt: hoursAgo(72),
-  },
-  {
-    type: "quote",
-    title: "לאו דזה",
-    body: "מסע של אלף מיל מתחיל בצעד אחד.",
-    tags: ["חוכמה", "השראה", "טאו"],
-    author: "לאו דזה",
-    color: "#FFF8F0",
-    createdAt: hoursAgo(336),
-  },
-  {
-    type: "note",
-    title: "כוח הסליחה",
-    body: "סליחה אינה מתנה לאחר. היא שחרור של עצמך מכעס ומעוול. כשאתם סולחים, אתם מתרפאים.",
-    tags: ["ריפוי", "סליחה", "גוף ונפש"],
-    author: "נעמי",
-    color: "#F5F0FF",
-    createdAt: hoursAgo(2),
-  },
-  {
-    type: "note",
-    title: "תן תודה על הרגעים",
-    body: "תרגלו להוסיף את מה שישנו שטוב. תנו תודה על הפשטות — ריקוד, גשם, או פשוט נשימה שקטה.",
-    tags: ["תודה", "מיינדפולנס"],
-    author: "רוי",
-    color: "#F0F4F8",
-    createdAt: hoursAgo(24),
-  },
-  // ─── New posts ─────────────────────────────────────────────────────────
+const NEW_POSTS = [
   {
     type: "quote",
     title: "רבי נחמן מברסלב",
@@ -348,18 +198,44 @@ const SAMPLE_POSTS = [
   },
 ];
 
-async function seed() {
-  console.log("🌱 Seeding Orot database...\n");
+async function run() {
+  // 1. Reset likeCount on all seed-user posts
+  console.log("Resetting likes on existing seed posts...\n");
+  const q = query(collection(db, "posts"), where("authorId", "==", SEED_USER_ID));
+  const snap = await getDocs(q);
 
-  // Create seed user
-  await setDoc(doc(db, "users", SEED_USER_ID), SEED_USER);
-  console.log("✅ Created seed user");
+  let resetCount = 0;
+  for (const d of snap.docs) {
+    const data = d.data();
+    if (data.likeCount > 0) {
+      await updateDoc(d.ref, { likeCount: 0 });
+      console.log(`  Reset likes: ${data.title}`);
+      resetCount++;
+    }
+  }
+  console.log(`\nReset ${resetCount} posts\n`);
 
-  // Collect all tags
+  // 2. Also delete any fake like documents for seed posts
+  const likesSnap = await getDocs(collection(db, "likes"));
+  const seedPostIds = new Set(snap.docs.map((d) => d.id));
+  let deletedLikes = 0;
+  const batch = writeBatch(db);
+  for (const likeDoc of likesSnap.docs) {
+    if (seedPostIds.has(likeDoc.data().postId)) {
+      batch.delete(likeDoc.ref);
+      deletedLikes++;
+    }
+  }
+  if (deletedLikes > 0) {
+    await batch.commit();
+    console.log(`Deleted ${deletedLikes} fake like documents\n`);
+  }
+
+  // 3. Add new posts
+  console.log("Adding new posts...\n");
   const tagCounts: Record<string, number> = {};
 
-  // Create posts
-  for (const post of SAMPLE_POSTS) {
+  for (const post of NEW_POSTS) {
     const postData = {
       type: post.type,
       title: post.title,
@@ -369,9 +245,9 @@ async function seed() {
       authorPhotoURL: null,
       tags: post.tags,
       color: post.color,
-      mediaURL: post.mediaURL || null,
-      thumbnailURL: post.mediaURL || null,
-      mediaType: post.mediaURL ? (post.type === "video" ? "video" : "image") : null,
+      mediaURL: (post as any).mediaURL || null,
+      thumbnailURL: (post as any).mediaURL || null,
+      mediaType: (post as any).mediaURL ? (post.type === "video" ? "video" : "image") : null,
       likeCount: 0,
       saveCount: 0,
       boardCount: 0,
@@ -380,28 +256,27 @@ async function seed() {
     };
 
     await addDoc(collection(db, "posts"), postData);
-    console.log(`  📝 Created: ${post.title}`);
+    console.log(`  + ${post.title}`);
 
     for (const tag of post.tags) {
       tagCounts[tag] = (tagCounts[tag] || 0) + 1;
     }
   }
 
-  // Create tags
+  // 4. Update tag counts
   for (const [name, count] of Object.entries(tagCounts)) {
     await setDoc(doc(db, "tags", name.toLowerCase()), {
       name,
       postCount: count,
       lastUsedAt: Timestamp.now(),
-    });
+    }, { merge: true });
   }
-  console.log(`\n✅ Created ${Object.keys(tagCounts).length} tags`);
 
-  console.log(`\n🎉 Seeding complete! ${SAMPLE_POSTS.length} posts created.`);
+  console.log(`\nAdded ${NEW_POSTS.length} new posts with ${Object.keys(tagCounts).length} tags`);
   process.exit(0);
 }
 
-seed().catch((err) => {
-  console.error("❌ Seed failed:", err);
+run().catch((err) => {
+  console.error("Failed:", err);
   process.exit(1);
 });

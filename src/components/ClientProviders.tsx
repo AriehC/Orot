@@ -3,9 +3,11 @@
 import { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export default function ClientProviders({ children }: { children: ReactNode }) {
   return (
+    <ThemeProvider>
     <AuthProvider>
       {children}
       <Toaster
@@ -25,5 +27,6 @@ export default function ClientProviders({ children }: { children: ReactNode }) {
         }}
       />
     </AuthProvider>
+    </ThemeProvider>
   );
 }

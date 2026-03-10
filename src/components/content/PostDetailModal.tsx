@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Post } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import EditPostModal from "./EditPostModal";
+import MeditationTimer from "./MeditationTimer";
+import toast from "react-hot-toast";
 import styles from "./PostDetailModal.module.css";
 
 interface PostDetailModalProps {
@@ -37,6 +39,23 @@ export default function PostDetailModal({
   const [currentPost, setCurrentPost] = useState(post);
   const typeConfig = TYPE_CONFIG[currentPost.type];
   const isOwner = currentUserId === currentPost.authorId;
+  const isMeditation = currentPost.tags.some((t) =>
+    ["מדיטציה", "מיינדפולנס", "נשימה", "מדיטציות"].includes(t)
+  );
+
+  async function handleShare() {
+    const text = `${currentPost.title}\n\n${currentPost.body}\n\n— ${currentPost.authorName}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: currentPost.title, text });
+      } catch {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+      toast("הטקסט הועתק");
+    }
+  }
 
   if (showEdit) {
     return (
@@ -113,6 +132,8 @@ export default function PostDetailModal({
             </div>
           )}
 
+          {isMeditation && <MeditationTimer />}
+
           <div className={styles.footer}>
             <Link
               href={`/profile/${currentPost.authorId}`}
@@ -137,6 +158,12 @@ export default function PostDetailModal({
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+              </button>
+              <button className={styles.shareBtn} onClick={handleShare} title="שיתוף">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                 </svg>
               </button>
             </div>

@@ -547,3 +547,14 @@ export async function getFeedStats(): Promise<{ postCount: number; newCount: num
     totalLikes,
   };
 }
+
+// ─── Discovery ─────────────────────────────────────────────────────────────
+
+export async function getRandomPost(excludeIds?: Set<string>): Promise<Post | null> {
+  const snap = await getDocs(query(collection(db, "posts"), limit(50)));
+  const posts = snap.docs
+    .map((d) => ({ id: d.id, boardCount: 0, ...d.data() } as Post))
+    .filter((p) => !excludeIds || !excludeIds.has(p.id));
+  if (posts.length === 0) return null;
+  return posts[Math.floor(Math.random() * posts.length)];
+}

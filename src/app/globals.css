@@ -51,6 +51,43 @@
   /* Transitions */
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: 0.15s ease;
+
+  /* Nav */
+  --nav-bg: rgba(250, 246, 241, 0.85);
+  --search-focus-bg: white;
+}
+
+/* Spiritual Night Mode */
+[data-theme="dark"] {
+  --bg: #1A1B2E;
+  --bg-secondary: #232440;
+  --bg-deep: #161728;
+  --card-bg: #2A2B45;
+  --text: #E8E4F0;
+  --text-secondary: #B0A8C0;
+  --text-muted: #7A7490;
+  --accent: #D4935E;
+  --accent-light: #E8A87C;
+  --accent-soft: #6B5A4A;
+  --accent-dark: #C17B4A;
+  --accent-glow: rgba(212, 147, 94, 0.18);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-accent: rgba(212, 147, 94, 0.2);
+  --overlay: rgba(10, 10, 25, 0.7);
+  --error: #E87B7B;
+  --success: #6BC090;
+
+  --gold-gradient: linear-gradient(135deg, #D4A04A, #F0C87A);
+  --accent-gradient: linear-gradient(135deg, #D4935E, #E8A87C);
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.5);
+
+  --nav-bg: rgba(26, 27, 46, 0.88);
+  --search-focus-bg: #232440;
 }
 
 /* Keyframes */
@@ -178,6 +215,46 @@ img {
     radial-gradient(circle at 80% 70%, #9B7ED8 1px, transparent 1px),
     radial-gradient(circle at 50% 50%, #5DA87E 1px, transparent 1px);
   background-size: 60px 60px, 80px 80px, 100px 100px;
+  transition: opacity 0.8s ease;
+}
+
+/* Dark mode stars pattern */
+[data-theme="dark"] .bgPattern {
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 15% 25%, #FFFFFF 0.5px, transparent 0.5px),
+    radial-gradient(circle at 45% 15%, #E8E4F0 0.3px, transparent 0.3px),
+    radial-gradient(circle at 75% 35%, #FFFFFF 0.6px, transparent 0.6px),
+    radial-gradient(circle at 25% 65%, #D4B896 0.4px, transparent 0.4px),
+    radial-gradient(circle at 85% 75%, #FFFFFF 0.3px, transparent 0.3px),
+    radial-gradient(circle at 55% 55%, #E8E4F0 0.5px, transparent 0.5px),
+    radial-gradient(circle at 35% 85%, #FFFFFF 0.4px, transparent 0.4px),
+    radial-gradient(circle at 65% 90%, #D4B896 0.3px, transparent 0.3px),
+    radial-gradient(circle at 95% 45%, #FFFFFF 0.5px, transparent 0.5px),
+    radial-gradient(circle at 10% 50%, #E8E4F0 0.4px, transparent 0.4px);
+  background-size:
+    200px 200px, 150px 180px, 250px 220px, 180px 250px, 220px 170px,
+    170px 230px, 240px 190px, 190px 210px, 160px 240px, 230px 160px;
+  animation: twinkle 8s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.6; }
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] ::selection {
+  background: rgba(212, 147, 94, 0.3);
+  color: var(--text);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #4A4B65;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 
 /* Responsive */

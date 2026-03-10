@@ -55,7 +55,7 @@
   max-width: 280px;
   border-radius: var(--radius);
   border: 1.5px solid var(--border);
-  background: white;
+  background: var(--card-bg);
   overflow: hidden;
   transition: var(--transition);
   flex-shrink: 0;

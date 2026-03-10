@@ -48,7 +48,7 @@
   padding: 10px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  background: white;
+  background: var(--card-bg);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -94,7 +94,7 @@
 .colorDotActive {
   composes: colorDot;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px white, 0 0 0 4px var(--accent);
+  box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--accent);
 }
 
 /* Tags input */

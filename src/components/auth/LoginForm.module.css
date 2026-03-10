@@ -9,7 +9,7 @@
 .card {
   width: 420px;
   max-width: 100%;
-  background: white;
+  background: var(--card-bg);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   padding: 40px 36px;
@@ -47,7 +47,7 @@
   padding: 12px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  background: white;
+  background: var(--card-bg);
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
@@ -151,7 +151,7 @@
 }
 
 .error {
-  background: #FFF0F0;
+  background: rgba(212, 123, 123, 0.1);
   color: var(--error);
   padding: 10px 14px;
   border-radius: var(--radius-sm);
