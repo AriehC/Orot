@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toggleSave, getUserSavedPostIds } from "@/lib/firestore";
 import toast from "react-hot-toast";
@@ -8,20 +8,22 @@ import toast from "react-hot-toast";
 export function useSave() {
   const { user } = useAuth();
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const savedIdsRef = useRef(savedIds);
+  savedIdsRef.current = savedIds;
 
   useEffect(() => {
     if (!user) {
       setSavedIds(new Set());
       return;
     }
-    getUserSavedPostIds(user.uid).then(setSavedIds);
+    getUserSavedPostIds(user.uid).then(setSavedIds).catch(console.error);
   }, [user]);
 
   const handleSave = useCallback(
     async (postId: string) => {
       if (!user) return;
 
-      const wasSaved = savedIds.has(postId);
+      const wasSaved = savedIdsRef.current.has(postId);
 
       // Optimistic update
       setSavedIds((prev) => {
@@ -43,7 +45,7 @@ export function useSave() {
         });
       }
     },
-    [user, savedIds]
+    [user]
   );
 
   const isSaved = useCallback(

@@ -19,6 +19,9 @@
   --overlay: rgba(45, 42, 38, 0.4);
   --error: #D47B7B;
   --success: #5DA87E;
+  --like: #E85D75;
+  --like-soft: rgba(232, 93, 117, 0.08);
+  --avatar-gradient: linear-gradient(135deg, #9B7ED8, #C17B4A);
 
   /* Gradients */
   --gold-gradient: linear-gradient(135deg, #D4A04A, #F0C87A);
@@ -76,6 +79,9 @@
   --overlay: rgba(10, 10, 25, 0.7);
   --error: #E87B7B;
   --success: #6BC090;
+  --like: #E85D75;
+  --like-soft: rgba(232, 93, 117, 0.12);
+  --avatar-gradient: linear-gradient(135deg, #9B7ED8, #C17B4A);
 
   --gold-gradient: linear-gradient(135deg, #D4A04A, #F0C87A);
   --accent-gradient: linear-gradient(135deg, #D4935E, #E8A87C);

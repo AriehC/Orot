@@ -124,11 +124,11 @@
 }
 
 .likeBtn:hover {
-  color: #E85D75;
+  color: var(--like);
 }
 
 .liked {
-  color: #E85D75;
+  color: var(--like);
 }
 
 .followBtnSmall {

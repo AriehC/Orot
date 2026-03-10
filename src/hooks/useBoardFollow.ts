@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toggleBoardFollow, getUserFollowedBoardIds } from "@/lib/firestore";
 import toast from "react-hot-toast";
@@ -8,13 +8,15 @@ import toast from "react-hot-toast";
 export function useBoardFollow() {
   const { user } = useAuth();
   const [followedBoardIds, setFollowedBoardIds] = useState<Set<string>>(new Set());
+  const followedBoardIdsRef = useRef(followedBoardIds);
+  followedBoardIdsRef.current = followedBoardIds;
 
   useEffect(() => {
     if (!user) {
       setFollowedBoardIds(new Set());
       return;
     }
-    getUserFollowedBoardIds(user.uid).then(setFollowedBoardIds);
+    getUserFollowedBoardIds(user.uid).then(setFollowedBoardIds).catch(console.error);
   }, [user]);
 
   const isBoardFollowed = useCallback(
@@ -29,7 +31,7 @@ export function useBoardFollow() {
         return;
       }
 
-      const wasFollowed = followedBoardIds.has(boardId);
+      const wasFollowed = followedBoardIdsRef.current.has(boardId);
       setFollowedBoardIds((prev) => {
         const next = new Set(prev);
         wasFollowed ? next.delete(boardId) : next.add(boardId);
@@ -48,7 +50,7 @@ export function useBoardFollow() {
         toast.error("שגיאה");
       }
     },
-    [user, followedBoardIds]
+    [user]
   );
 
   return { isBoardFollowed, handleBoardFollow };

@@ -13,6 +13,7 @@ import {
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { auth, db, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 import { createBoard } from "@/lib/firestore";
+import toast from "react-hot-toast";
 import { UserProfile } from "@/lib/types";
 
 interface AuthContextValue {
@@ -90,7 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const userProfile = await ensureUserProfile(firebaseUser);
           setProfile(userProfile);
-        } catch {
+        } catch (error) {
+          console.error("Profile load error:", error);
+          toast.error("שגיאה בטעינת הפרופיל");
           setProfile(null);
         }
       } else {

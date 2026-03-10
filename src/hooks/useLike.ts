@@ -13,7 +13,7 @@ export function useLike() {
       setLikedIds(new Set());
       return;
     }
-    getUserLikedPostIds(user.uid).then(setLikedIds);
+    getUserLikedPostIds(user.uid).then(setLikedIds).catch(console.error);
   }, [user]);
 
   const handleLike = useCallback(

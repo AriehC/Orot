@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toggleUserFollow, isFollowingUser } from "@/lib/firestore";
 import toast from "react-hot-toast";
@@ -9,6 +9,8 @@ export function useUserFollow(targetUserId: string) {
   const { user } = useAuth();
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const followingRef = useRef(following);
+  followingRef.current = following;
 
   useEffect(() => {
     if (!user || user.uid === targetUserId) {
@@ -18,7 +20,7 @@ export function useUserFollow(targetUserId: string) {
     isFollowingUser(targetUserId, user.uid).then((v) => {
       setFollowing(v);
       setLoading(false);
-    });
+    }).catch(console.error);
   }, [user, targetUserId]);
 
   const handleToggleFollow = useCallback(async () => {
@@ -27,7 +29,7 @@ export function useUserFollow(targetUserId: string) {
       return;
     }
 
-    const wasFollowing = following;
+    const wasFollowing = followingRef.current;
     setFollowing(!wasFollowing);
 
     try {
@@ -37,7 +39,7 @@ export function useUserFollow(targetUserId: string) {
       setFollowing(wasFollowing);
       toast.error("שגיאה");
     }
-  }, [user, targetUserId, following]);
+  }, [user, targetUserId]);
 
   return { following, loading, handleToggleFollow };
 }

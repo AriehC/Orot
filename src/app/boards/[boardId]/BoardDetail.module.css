@@ -111,7 +111,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #9B7ED8, #C17B4A);
+  background: var(--avatar-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,13 +140,13 @@
 }
 
 .likeBtn:hover {
-  border-color: #E85D75;
-  background: rgba(232, 93, 117, 0.06);
+  border-color: var(--like);
+  background: var(--like-soft);
 }
 
 .liked {
-  border-color: #E85D75;
-  background: rgba(232, 93, 117, 0.08);
+  border-color: var(--like);
+  background: var(--like-soft);
 }
 
 .followBtn {

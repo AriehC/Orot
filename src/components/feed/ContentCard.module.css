@@ -208,7 +208,7 @@
 }
 
 .liked {
-  color: #E85D75;
+  color: var(--like);
 }
 
 .saved {
@@ -219,7 +219,7 @@
 .newBadge {
   position: absolute;
   top: 12px;
-  left: 12px;
+  inset-inline-start: 12px;
   padding: 3px 10px;
   border-radius: var(--radius-sm);
   background: var(--accent-gradient);

@@ -188,7 +188,7 @@
 .removeMedia {
   position: absolute;
   top: 8px;
-  left: 8px;
+  inset-inline-start: 8px;
   width: 28px;
   height: 28px;
   border-radius: 50%;

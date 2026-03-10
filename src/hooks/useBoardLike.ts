@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toggleBoardLike, getUserLikedBoardIds } from "@/lib/firestore";
 import toast from "react-hot-toast";
@@ -8,13 +8,15 @@ import toast from "react-hot-toast";
 export function useBoardLike() {
   const { user } = useAuth();
   const [likedBoardIds, setLikedBoardIds] = useState<Set<string>>(new Set());
+  const likedBoardIdsRef = useRef(likedBoardIds);
+  likedBoardIdsRef.current = likedBoardIds;
 
   useEffect(() => {
     if (!user) {
       setLikedBoardIds(new Set());
       return;
     }
-    getUserLikedBoardIds(user.uid).then(setLikedBoardIds);
+    getUserLikedBoardIds(user.uid).then(setLikedBoardIds).catch(console.error);
   }, [user]);
 
   const isBoardLiked = useCallback(
@@ -29,7 +31,7 @@ export function useBoardLike() {
         return;
       }
 
-      const wasLiked = likedBoardIds.has(boardId);
+      const wasLiked = likedBoardIdsRef.current.has(boardId);
       setLikedBoardIds((prev) => {
         const next = new Set(prev);
         wasLiked ? next.delete(boardId) : next.add(boardId);
@@ -47,7 +49,7 @@ export function useBoardLike() {
         toast.error("שגיאה");
       }
     },
-    [user, likedBoardIds]
+    [user]
   );
 
   return { isBoardLiked, handleBoardLike };

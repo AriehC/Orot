@@ -12,6 +12,7 @@ import MasonryFeed from "@/components/feed/MasonryFeed";
 import Navbar from "@/components/layout/Navbar";
 import Spinner from "@/components/ui/Spinner";
 import toast from "react-hot-toast";
+import styles from "./BoardDetail.module.css";
 
 export default function BoardClient({ params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = use(params);
@@ -45,31 +46,16 @@ export default function BoardClient({ params }: { params: Promise<{ boardId: str
     <>
       <Navbar searchQuery="" onSearchChange={() => {}} onCreateClick={() => {}} />
 
-      <div style={{ maxWidth: "var(--content-max-width)", margin: "0 auto", padding: "24px var(--page-padding)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-          <Link
-            href="/"
-            style={{
-              padding: "8px 12px",
-              border: "1.5px solid var(--border)",
-              borderRadius: "var(--radius-sm)",
-              background: "white",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 13,
-              color: "var(--text-secondary)",
-            }}
-          >
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <Link href="/" className={styles.backBtn}>
             ← חזרה
           </Link>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <h2 style={{ fontFamily: "var(--font-heading)", fontSize: 24 }}>{board.name}</h2>
-              <span style={{ fontSize: 14 }}>{board.isPublic ? "🌐" : "🔒"}</span>
-            </div>
-            <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 4 }}>{board.description}</p>
+          <div className={styles.titleRow}>
+            <h2 className={styles.title}>{board.name}</h2>
+            <span>{board.isPublic ? "🌐" : "🔒"}</span>
           </div>
+          {board.description && <p className={styles.description}>{board.description}</p>}
         </div>
       </div>
 
