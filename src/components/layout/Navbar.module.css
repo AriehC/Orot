@@ -126,6 +126,18 @@
   color: white;
 }
 
+:global([data-theme="dark"]) .btnPrimary {
+  background: rgba(212, 147, 94, 0.15);
+  color: var(--accent);
+  border: 1.5px solid var(--accent-soft);
+}
+
+:global([data-theme="dark"]) .btnPrimary:hover {
+  background: rgba(212, 147, 94, 0.25);
+  color: var(--accent-light);
+  box-shadow: 0 4px 12px rgba(212, 147, 94, 0.15);
+}
+
 .avatar {
   width: 36px;
   height: 36px;

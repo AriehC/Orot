@@ -232,3 +232,8 @@
   animation: float 3s ease infinite;
   z-index: 2;
 }
+
+:global([data-theme="dark"]) .newBadge {
+  background: rgba(212, 147, 94, 0.2);
+  color: var(--accent);
+}
