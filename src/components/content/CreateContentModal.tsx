@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createPost } from "@/lib/firestore";
 import { uploadMedia } from "@/lib/storage";
 import { PostType } from "@/lib/types";
+import { isInstagramURL, parseCaption, extractHashtags } from "@/lib/instagram";
 import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 import styles from "./CreateContentModal.module.css";
@@ -36,6 +37,11 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Instagram import state
+  const [igURL, setIgURL] = useState("");
+  const [igLoading, setIgLoading] = useState(false);
+  const [sourceURL, setSourceURL] = useState<string | null>(null);
+
   function handleTagKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
       e.preventDefault();
@@ -47,6 +53,40 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
     }
     if (e.key === "Backspace" && !tagInput && tags.length > 0) {
       setTags(tags.slice(0, -1));
+    }
+  }
+
+  async function handleInstagramImport() {
+    if (!igURL.trim() || !isInstagramURL(igURL)) {
+      toast.error("קישור אינסטגרם לא תקין");
+      return;
+    }
+    setIgLoading(true);
+    try {
+      const res = await fetch(`/api/instagram-oembed?url=${encodeURIComponent(igURL.trim())}`);
+      if (!res.ok) throw new Error("oEmbed failed");
+      const data = await res.json();
+
+      // Parse caption into title + body
+      const { title: parsedTitle, body: parsedBody } = parseCaption(data.title || "");
+      const hashtags = extractHashtags(data.title || "");
+
+      setTitle(parsedTitle || data.author_name || "");
+      setBody(parsedBody);
+      if (hashtags.length > 0) setTags(hashtags);
+      setType("note");
+      setSourceURL(igURL.trim());
+
+      // If there's a thumbnail, set it as preview (won't be uploaded, just for display)
+      if (data.thumbnail_url) {
+        setMediaPreview(data.thumbnail_url);
+      }
+
+      toast("תוכן יובא מאינסטגרם ✨");
+    } catch {
+      toast.error("לא ניתן לייבא מהקישור הזה");
+    } finally {
+      setIgLoading(false);
     }
   }
 
@@ -88,6 +128,8 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
         mediaURL,
         thumbnailURL: mediaURL,
         mediaType,
+        sourceURL: sourceURL,
+        sourceType: sourceURL ? "instagram" : null,
       });
 
       toast("הפתק נוצר בהצלחה ✨");
@@ -101,6 +143,38 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
 
   return (
     <Modal title="יצירת תוכן חדש" onClose={onClose}>
+      <div className={styles.importSection}>
+        <label>ייבוא מאינסטגרם</label>
+        <div className={styles.importRow}>
+          <input
+            className={styles.importInput}
+            placeholder="הדביקו קישור לפוסט באינסטגרם..."
+            value={igURL}
+            onChange={(e) => setIgURL(e.target.value)}
+            dir="ltr"
+          />
+          <button
+            className={styles.importBtn}
+            onClick={handleInstagramImport}
+            disabled={igLoading || !igURL.trim()}
+            type="button"
+          >
+            {igLoading ? "מייבא..." : "ייבוא"}
+          </button>
+        </div>
+        {sourceURL && (
+          <span className={styles.instagramBadge}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" />
+              <circle cx="12" cy="12" r="5" />
+              <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+            יובא מאינסטגרם
+            <button type="button" onClick={() => { setSourceURL(null); }} className={styles.badgeRemove}>×</button>
+          </span>
+        )}
+      </div>
+
       <div className={styles.formGroup}>
         <label>סוג תוכן</label>
         <div className={styles.typeSelector}>

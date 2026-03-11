@@ -32,6 +32,8 @@ export interface Post {
   likeCount: number;
   saveCount: number;
   boardCount: number;
+  sourceURL: string | null;
+  sourceType: "instagram" | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

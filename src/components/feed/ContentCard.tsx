@@ -111,6 +111,23 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
           </button>
         )}
 
+        {post.sourceURL && (
+          <a
+            href={post.sourceURL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.sourceLink}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" />
+              <circle cx="12" cy="12" r="5" />
+              <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+            מקור: Instagram
+          </a>
+        )}
+
         <div className={styles.cardFooter}>
           <Link
             href={`/profile/${post.authorId}`}
