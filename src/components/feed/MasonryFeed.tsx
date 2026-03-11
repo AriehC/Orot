@@ -18,6 +18,8 @@ interface MasonryFeedProps {
   onPostClick?: (post: Post) => void;
 }
 
+const SKELETON_HEIGHTS = [140, 180, 160, 200, 150, 190, 170, 210];
+
 const BREAKPOINT_COLS = {
   default: 4,
   1200: 3,
@@ -57,8 +59,8 @@ export default function MasonryFeed({
           className={styles.masonry}
           columnClassName={styles.masonryColumn}
         >
-          {Array.from({ length: 8 }).map((_, i) => (
-            <SkeletonCard key={i} height={120 + Math.random() * 100} />
+          {SKELETON_HEIGHTS.map((h, i) => (
+            <SkeletonCard key={i} height={h} />
           ))}
         </Masonry>
       </div>

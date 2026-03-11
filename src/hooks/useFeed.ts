@@ -14,21 +14,29 @@ interface UseFeedOptions {
 export function useFeed(options?: UseFeedOptions) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   // Track ranked order by post ids — only re-rank when posts are added/removed
   const rankedOrderRef = useRef<string[]>([]);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
 
     const unsubscribe = subscribeToPosts(
       (fetchedPosts) => {
         setPosts(fetchedPosts);
         setLoading(false);
+        setError(null);
       },
       {
         tag: options?.tag,
         authorId: options?.authorId,
         limitCount: 50,
+      },
+      (firestoreError) => {
+        console.error("useFeed: subscription error:", firestoreError);
+        setError("שגיאה בטעינת התוכן");
+        setLoading(false);
       }
     );
 
@@ -72,5 +80,5 @@ export function useFeed(options?: UseFeedOptions) {
     return ranked;
   }, [filteredPosts]);
 
-  return { posts: sortedPosts, loading };
+  return { posts: sortedPosts, loading, error };
 }

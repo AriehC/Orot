@@ -68,6 +68,7 @@ export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModa
           placeholder="לדוגמה: מדיטציות בוקר"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          maxLength={100}
         />
       </div>
 
@@ -77,6 +78,7 @@ export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModa
           placeholder="על מה הלוח הזה?"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          maxLength={500}
         />
       </div>
 
@@ -104,10 +106,13 @@ export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModa
         <label>צבע הלוח</label>
         <div className={styles.colorPicker}>
           {BOARD_COLORS.map((c) => (
-            <div
+            <button
               key={c}
+              type="button"
               className={color === c ? styles.colorDotActive : styles.colorDot}
               style={{ backgroundColor: c }}
+              aria-label={`בחר צבע ${c}`}
+              aria-pressed={color === c}
               onClick={() => setColor(c)}
             />
           ))}

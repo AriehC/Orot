@@ -27,15 +27,21 @@ export default function BoardClient({ params }: { params: Promise<{ boardId: str
 
   useEffect(() => {
     async function load() {
-      const b = await getBoard(boardId);
-      if (!b) {
-        router.push("/");
-        return;
+      try {
+        const b = await getBoard(boardId);
+        if (!b) {
+          router.push("/");
+          return;
+        }
+        setBoard(b);
+        const p = await getBoardPosts(boardId);
+        setPosts(p);
+        setLoading(false);
+      } catch (error) {
+        console.error("BoardClient: failed to load board:", error);
+        toast.error("שגיאה בטעינת הלוח");
+        setLoading(false);
       }
-      setBoard(b);
-      const p = await getBoardPosts(boardId);
-      setPosts(p);
-      setLoading(false);
     }
     load();
   }, [boardId, router]);
@@ -46,20 +52,21 @@ export default function BoardClient({ params }: { params: Promise<{ boardId: str
     <>
       <Navbar searchQuery="" onSearchChange={() => {}} onCreateClick={() => {}} />
 
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <Link href="/" className={styles.backBtn}>
-            ← חזרה
-          </Link>
-          <div className={styles.titleRow}>
-            <h2 className={styles.title}>{board.name}</h2>
-            <span>{board.isPublic ? "🌐" : "🔒"}</span>
+      <main id="main-content">
+        <div className={styles.container}>
+          <div className={styles.header}>
+            <Link href="/" className={styles.backBtn}>
+              ← חזרה
+            </Link>
+            <div className={styles.titleRow}>
+              <h1 className={styles.title}>{board.name}</h1>
+              <span aria-label={board.isPublic ? "ציבורי" : "פרטי"}>{board.isPublic ? "🌐" : "🔒"}</span>
+            </div>
+            {board.description && <p className={styles.description}>{board.description}</p>}
           </div>
-          {board.description && <p className={styles.description}>{board.description}</p>}
         </div>
-      </div>
 
-      <MasonryFeed
+        <MasonryFeed
         posts={posts}
         loading={loading}
         isLiked={isLiked}
@@ -67,6 +74,7 @@ export default function BoardClient({ params }: { params: Promise<{ boardId: str
         onLike={(id) => user ? handleLike(id) : toast("יש להתחבר")}
         onSave={(id) => user ? handleSave(id) : toast("יש להתחבר")}
       />
+      </main>
     </>
   );
 }

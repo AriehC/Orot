@@ -58,7 +58,12 @@ export default function AddToBoardModal({ postId, onClose }: AddToBoardModalProp
               borderColor: boardsWithPost.has(board.id) ? board.color : "var(--border)",
               opacity: boardsWithPost.has(board.id) ? 0.7 : 1,
             }}
+            role="button"
+            tabIndex={0}
+            aria-label={boardsWithPost.has(board.id) ? `${board.name} - כבר נוסף` : `הוסף ללוח ${board.name}`}
+            aria-disabled={boardsWithPost.has(board.id)}
             onClick={() => handleAdd(board.id)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleAdd(board.id); } }}
           >
             <h3 style={{ color: board.color }}>
               {boardsWithPost.has(board.id) ? "✓ " : ""}{board.name}

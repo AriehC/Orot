@@ -16,10 +16,15 @@ export default function FeaturedBoards() {
   const { isBoardFollowed, handleBoardFollow } = useBoardFollow();
 
   useEffect(() => {
-    getPublicBoards("popular", 8).then((b) => {
-      setBoards(b);
-      setLoading(false);
-    });
+    getPublicBoards("popular", 8)
+      .then((b) => {
+        setBoards(b);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("FeaturedBoards: failed to load boards:", error);
+        setLoading(false);
+      });
   }, []);
 
   if (loading || boards.length === 0) return null;
@@ -28,7 +33,7 @@ export default function FeaturedBoards() {
     <section className={styles.section}>
       <div className={styles.header}>
         <h2 className={styles.title}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
           </svg>
           לוחות מומלצים
@@ -63,7 +68,8 @@ export default function FeaturedBoards() {
                   <button
                     className={`${styles.likeBtn} ${liked ? styles.liked : ""}`}
                     onClick={() => handleBoardLike(board.id)}
-                    aria-label="לייק"
+                    aria-label={liked ? `הסר לייק מ${board.name}` : `לייק ל${board.name}`}
+                    aria-pressed={liked}
                   >
                     <svg width="13" height="13" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -72,6 +78,8 @@ export default function FeaturedBoards() {
                   <button
                     className={`${styles.followBtnSmall} ${followed ? styles.followingSmall : ""}`}
                     onClick={() => handleBoardFollow(board.id)}
+                    aria-label={followed ? `הפסק לעקוב אחרי ${board.name}` : `עקוב אחרי ${board.name}`}
+                    aria-pressed={followed}
                   >
                     {followed ? "עוקב" : "עקוב"}
                   </button>

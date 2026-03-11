@@ -4,6 +4,7 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAuthErrorMessage, getFirebaseErrorCode } from "@/lib/authErrors";
 import styles from "./LoginForm.module.css";
 
 export default function RegisterForm() {
@@ -20,8 +21,10 @@ export default function RegisterForm() {
       setError("");
       await signInWithGoogle();
       router.push("/");
-    } catch {
-      setError("שגיאה בהתחברות עם Google");
+    } catch (err) {
+      const code = getFirebaseErrorCode(err);
+      const msg = getAuthErrorMessage(code);
+      if (msg) setError(msg);
     }
   }
 
@@ -37,8 +40,9 @@ export default function RegisterForm() {
     try {
       await signUpWithEmail(email, password, displayName);
       router.push("/");
-    } catch {
-      setError("שגיאה ביצירת החשבון. ייתכן שהאימייל כבר בשימוש.");
+    } catch (err) {
+      const code = getFirebaseErrorCode(err);
+      setError(getAuthErrorMessage(code));
     } finally {
       setLoading(false);
     }
@@ -47,7 +51,19 @@ export default function RegisterForm() {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <div className={styles.logo}>✦</div>
+        <div className={styles.logo}>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="6" fill="white"/>
+            <line x1="16" y1="2" x2="16" y2="7.5" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="16" y1="24.5" x2="16" y2="30" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="2" y1="16" x2="7.5" y2="16" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="24.5" y1="16" x2="30" y2="16" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="6.1" y1="6.1" x2="10" y2="10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="22" y1="22" x2="25.9" y2="25.9" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="6.1" y1="25.9" x2="10" y2="22" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="22" y1="10" x2="25.9" y2="6.1" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+        </div>
         <h1 className={styles.title}>הצטרפו לאורות</h1>
         <p className={styles.subtitle}>צרו חשבון והתחילו לשתף השראה</p>
 
@@ -63,36 +79,45 @@ export default function RegisterForm() {
 
         <div className={styles.divider}>או</div>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {error && <div className={styles.error} role="alert">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
-            <label>שם תצוגה</label>
+            <label htmlFor="register-name">שם תצוגה</label>
             <input
+              id="register-name"
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="השם שיוצג באתר"
+              autoComplete="name"
+              required
             />
           </div>
           <div className={styles.formGroup}>
-            <label>אימייל</label>
+            <label htmlFor="register-email">אימייל</label>
             <input
+              id="register-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
               dir="ltr"
+              autoComplete="email"
+              required
             />
           </div>
           <div className={styles.formGroup}>
-            <label>סיסמה</label>
+            <label htmlFor="register-password">סיסמה</label>
             <input
+              id="register-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="לפחות 6 תווים"
               dir="ltr"
+              autoComplete="new-password"
+              required
             />
           </div>
           <button className={styles.submitBtn} type="submit" disabled={loading}>

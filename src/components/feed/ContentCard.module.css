@@ -25,19 +25,22 @@
 }
 
 /* Image */
-.cardImage {
+.imageWrapper {
+  position: relative;
   width: 100%;
-  display: block;
-  object-fit: cover;
   min-height: 140px;
   max-height: 260px;
+  aspect-ratio: 4 / 3;
+}
+
+.cardImage {
+  object-fit: cover;
 }
 
 .videoOverlay {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   height: 200px;
   display: flex;
   align-items: center;
@@ -215,11 +218,20 @@
   color: var(--accent);
 }
 
+/* Badge row */
+.badgeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.badgeRow .typeBadge {
+  margin-bottom: 0;
+}
+
 /* New badge */
 .newBadge {
-  position: absolute;
-  top: 12px;
-  inset-inline-start: 12px;
   padding: 3px 10px;
   border-radius: var(--radius-sm);
   background: var(--accent-gradient);
@@ -230,7 +242,6 @@
   align-items: center;
   gap: 4px;
   animation: float 3s ease infinite;
-  z-index: 2;
 }
 
 :global([data-theme="dark"]) .newBadge {

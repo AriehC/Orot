@@ -8,7 +8,11 @@ export default function FeedStats() {
   const [stats, setStats] = useState({ postCount: 0, newCount: 0, boardCount: 0, totalLikes: 0 });
 
   useEffect(() => {
-    getFeedStats().then(setStats).catch(() => {});
+    getFeedStats()
+      .then(setStats)
+      .catch((error) => {
+        console.error("FeedStats: failed to load stats:", error);
+      });
   }, []);
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Post } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import styles from "./ContentCard.module.css";
@@ -34,28 +35,25 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
   const boardCount = post.boardCount || 0;
 
   return (
-    <div
+    <article
       className={styles.card}
       style={{
         backgroundColor: post.color || "#FFFFFF",
         animationDelay: `${index * 0.06}s`,
       }}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={post.title}
       onClick={() => onClick?.(post)}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(post); } } : undefined}
     >
-      {isNew && (
-        <div className={styles.newBadge}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" /></svg>
-          חדש
-        </div>
-      )}
-
       {post.mediaURL && (post.type === "image" || post.type === "video") && (
-        <div style={{ position: "relative" }}>
-          <img
+        <div className={styles.imageWrapper}>
+          <Image
             className={styles.cardImage}
             src={post.thumbnailURL || post.mediaURL}
             alt={post.title}
-            loading="lazy"
+            fill
+            sizes="(max-width: 500px) 100vw, (max-width: 800px) 50vw, (max-width: 1200px) 33vw, 25vw"
           />
           {post.type === "video" && (
             <div className={styles.videoOverlay}>
@@ -70,12 +68,20 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
       )}
 
       <div className={styles.cardBody}>
-        <span
-          className={styles.typeBadge}
-          style={{ background: typeConfig.bg, color: typeConfig.color }}
-        >
-          {typeConfig.label}
-        </span>
+        <div className={styles.badgeRow}>
+          <span
+            className={styles.typeBadge}
+            style={{ background: typeConfig.bg, color: typeConfig.color }}
+          >
+            {typeConfig.label}
+          </span>
+          {isNew && (
+            <div className={styles.newBadge}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" /></svg>
+              חדש
+            </div>
+          )}
+        </div>
 
         <h3 className={styles.cardTitle}>{post.title}</h3>
 
@@ -117,7 +123,8 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
             <button
               className={`${styles.actionBtn} ${isLiked ? styles.liked : ""}`}
               onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
-              aria-label="לייק"
+              aria-label={isLiked ? "הסר לייק" : "לייק"}
+              aria-pressed={isLiked}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -127,7 +134,8 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
             <button
               className={`${styles.actionBtn} ${isSaved ? styles.saved : ""}`}
               onClick={(e) => { e.stopPropagation(); onSave(post.id); }}
-              aria-label="שמירה"
+              aria-label={isSaved ? "הסר שמירה" : "שמירה"}
+              aria-pressed={isSaved}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
@@ -150,6 +158,6 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

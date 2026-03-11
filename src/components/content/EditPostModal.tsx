@@ -35,8 +35,8 @@ export default function EditPostModal({ post, onClose, onSaved }: EditPostModalP
     if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
       e.preventDefault();
       const newTag = tagInput.trim().replace(",", "");
-      if (newTag && !tags.includes(newTag)) {
-        setTags([...tags, newTag]);
+      if (newTag && !tags.includes(newTag) && tags.length < 10) {
+        setTags([...tags, newTag.slice(0, 30)]);
       }
       setTagInput("");
     }
@@ -91,6 +91,7 @@ export default function EditPostModal({ post, onClose, onSaved }: EditPostModalP
           placeholder="מה ההשראה?"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          maxLength={200}
         />
       </div>
 
@@ -100,6 +101,7 @@ export default function EditPostModal({ post, onClose, onSaved }: EditPostModalP
           placeholder="שתפו את המחשבה, הציטוט, או התובנה שלכם..."
           value={body}
           onChange={(e) => setBody(e.target.value)}
+          maxLength={5000}
         />
       </div>
 
@@ -109,7 +111,7 @@ export default function EditPostModal({ post, onClose, onSaved }: EditPostModalP
           {tags.map((tag) => (
             <span key={tag} className={styles.tagChip}>
               #{tag}
-              <button className={styles.tagRemove} onClick={() => setTags(tags.filter((t) => t !== tag))} type="button">
+              <button className={styles.tagRemove} onClick={() => setTags(tags.filter((t) => t !== tag))} type="button" aria-label={`הסר תגית ${tag}`}>
                 ×
               </button>
             </span>
@@ -129,10 +131,13 @@ export default function EditPostModal({ post, onClose, onSaved }: EditPostModalP
         <label>צבע</label>
         <div className={styles.colorPicker}>
           {COLORS.map((c) => (
-            <div
+            <button
               key={c}
+              type="button"
               className={color === c ? styles.colorDotActive : styles.colorDot}
               style={{ backgroundColor: c }}
+              aria-label={`בחר צבע ${c}`}
+              aria-pressed={color === c}
               onClick={() => setColor(c)}
             />
           ))}

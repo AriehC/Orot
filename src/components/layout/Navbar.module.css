@@ -44,6 +44,8 @@
   font-size: 22px;
   color: var(--text);
   letter-spacing: -0.5px;
+  line-height: 1;
+  padding-top: 2px;
 }
 
 .searchBar {
@@ -54,7 +56,9 @@
 
 .searchInput {
   width: 100%;
-  padding: 10px 42px 10px 16px;
+  padding: 10px;
+  padding-inline-start: 42px;
+  padding-inline-end: 16px;
   border: 2px solid transparent;
   border-radius: var(--radius-xl);
   background: var(--bg-secondary);
@@ -76,7 +80,7 @@
 
 .searchIcon {
   position: absolute;
-  right: 14px;
+  inset-inline-start: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);

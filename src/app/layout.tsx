@@ -22,8 +22,27 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "אורות — השראה רוחנית",
-  description: "פלטפורמה להשראה רוחנית, ציטוטים, מדיטציה והגות",
+  metadataBase: new URL("https://orotoo.web.app"),
+  title: { default: "אורות — השראה רוחנית", template: "%s | אורות" },
+  description: "פלטפורמת השראה רוחנית — ציטוטים, הגיגים, ומדיטציה",
+  keywords: ["השראה", "רוחניות", "מדיטציה", "ציטוטים", "הגיגים", "אורות"],
+  authors: [{ name: "אורות" }],
+  applicationName: "אורות",
+  openGraph: {
+    type: "website",
+    locale: "he_IL",
+    url: "https://orotoo.web.app",
+    siteName: "אורות",
+    title: "אורות — השראה רוחנית",
+    description: "פלטפורמת השראה רוחנית — ציטוטים, הגיגים, ומדיטציה",
+  },
+  twitter: {
+    card: "summary",
+    title: "אורות — השראה רוחנית",
+    description: "פלטפורמת השראה רוחנית — ציטוטים, הגיגים, ומדיטציה",
+  },
+  robots: { index: true, follow: true },
+  alternates: { canonical: "https://orotoo.web.app" },
 };
 
 export default function RootLayout({
@@ -34,7 +53,8 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" className={`${secularOne.variable} ${notoSansHebrew.variable}`}>
       <body>
-        <div className="bgPattern" />
+        <a href="#main-content" className="skipToContent">דלג לתוכן</a>
+        <div className="bgPattern" aria-hidden="true" />
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>

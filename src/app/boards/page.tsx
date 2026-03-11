@@ -24,10 +24,16 @@ export default function BoardsDiscoverPage() {
 
   useEffect(() => {
     setLoading(true);
-    getPublicBoards(sortBy, 30).then((b) => {
-      setBoards(b);
-      setLoading(false);
-    });
+    getPublicBoards(sortBy, 30)
+      .then((b) => {
+        setBoards(b);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("BoardsDiscoverPage: failed to load boards:", error);
+        toast.error("שגיאה בטעינת הלוחות");
+        setLoading(false);
+      });
   }, [sortBy]);
 
   function handleLike(boardId: string) {
@@ -44,7 +50,7 @@ export default function BoardsDiscoverPage() {
     <>
       <Navbar searchQuery="" onSearchChange={() => {}} onCreateClick={() => {}} />
 
-      <div className={styles.container}>
+      <main id="main-content" className={styles.container}>
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>גלו לוחות</h1>
@@ -52,12 +58,14 @@ export default function BoardsDiscoverPage() {
           </div>
         </div>
 
-        <div className={styles.tabs}>
+        <div className={styles.tabs} role="tablist" aria-label="מיון לוחות">
           <button
             className={sortBy === "popular" ? styles.tabActive : styles.tab}
             onClick={() => setSortBy("popular")}
+            role="tab"
+            aria-selected={sortBy === "popular"}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
             פופולרי
@@ -65,8 +73,10 @@ export default function BoardsDiscoverPage() {
           <button
             className={sortBy === "recent" ? styles.tabActive : styles.tab}
             onClick={() => setSortBy("recent")}
+            role="tab"
+            aria-selected={sortBy === "recent"}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
             חדשים
@@ -91,7 +101,7 @@ export default function BoardsDiscoverPage() {
             ))}
           </div>
         )}
-      </div>
+      </main>
     </>
   );
 }

@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Navbar from "@/components/layout/Navbar";
 import FeedFilters from "@/components/feed/FeedFilters";
 import FeedStats from "@/components/feed/FeedStats";
 import FeaturedBoards from "@/components/boards/FeaturedBoards";
 import MasonryFeed from "@/components/feed/MasonryFeed";
-import CreateContentModal from "@/components/content/CreateContentModal";
-import PostDetailModal from "@/components/content/PostDetailModal";
-import BoardsSidebar from "@/components/boards/BoardsSidebar";
-import AddToBoardModal from "@/components/boards/AddToBoardModal";
-import BoardsContainingPostModal from "@/components/boards/BoardsContainingPostModal";
 import { useFeed } from "@/hooks/useFeed";
+
+const CreateContentModal = dynamic(() => import("@/components/content/CreateContentModal"));
+const PostDetailModal = dynamic(() => import("@/components/content/PostDetailModal"));
+const BoardsSidebar = dynamic(() => import("@/components/boards/BoardsSidebar"));
+const AddToBoardModal = dynamic(() => import("@/components/boards/AddToBoardModal"));
+const BoardsContainingPostModal = dynamic(() => import("@/components/boards/BoardsContainingPostModal"));
 import { useLike } from "@/hooks/useLike";
 import { useSave } from "@/hooks/useSave";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,12 +72,17 @@ export default function HomePage() {
   }
 
   async function handleDiscover() {
-    const post = await getRandomPost(seenRandomIds);
-    if (post) {
-      setSeenRandomIds((prev) => new Set(prev).add(post.id));
-      setSelectedPost(post);
-    } else {
-      toast("אין עוד תוכן לגלות");
+    try {
+      const post = await getRandomPost(seenRandomIds);
+      if (post) {
+        setSeenRandomIds((prev) => new Set(prev).add(post.id));
+        setSelectedPost(post);
+      } else {
+        toast("אין עוד תוכן לגלות");
+      }
+    } catch (error) {
+      console.error("handleDiscover failed:", error);
+      toast.error("שגיאה בטעינת תוכן אקראי");
     }
   }
 
@@ -96,21 +103,23 @@ export default function HomePage() {
         onBoardsClick={handleBoardsClick}
       />
 
-      <FeedFilters onDiscover={handleDiscover} />
-      <FeedStats />
-      <FeaturedBoards />
+      <main id="main-content">
+        <FeedFilters onDiscover={handleDiscover} />
+        <FeedStats />
+        <FeaturedBoards />
 
-      <MasonryFeed
-        posts={posts}
-        loading={loading}
-        isLiked={isLiked}
-        isSaved={isSaved}
-        onLike={handleLikeClick}
-        onSave={handleSaveClick}
-        onAddToBoard={handleAddToBoard}
-        onShowBoards={setShowBoardsForPostId}
-        onPostClick={setSelectedPost}
-      />
+        <MasonryFeed
+          posts={posts}
+          loading={loading}
+          isLiked={isLiked}
+          isSaved={isSaved}
+          onLike={handleLikeClick}
+          onSave={handleSaveClick}
+          onAddToBoard={handleAddToBoard}
+          onShowBoards={setShowBoardsForPostId}
+          onPostClick={setSelectedPost}
+        />
+      </main>
 
       {showCreate && <CreateContentModal onClose={() => setShowCreate(false)} />}
       {showBoards && <BoardsSidebar onClose={() => setShowBoards(false)} />}

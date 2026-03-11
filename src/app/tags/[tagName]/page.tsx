@@ -24,26 +24,28 @@ export default function TagPage({ params }: { params: Promise<{ tagName: string 
     <>
       <Navbar searchQuery="" onSearchChange={() => {}} onCreateClick={() => {}} />
 
-      <div className={styles.header}>
-        <Link href="/" className={styles.back}>
-          ← חזרה
-        </Link>
-        <div className={styles.tagInfo}>
-          <h1 className={styles.tagTitle}>#{tag}</h1>
-          <p className={styles.tagCount}>
-            {!loading && `${posts.length} פוסטים`}
-          </p>
+      <main id="main-content">
+        <div className={styles.header}>
+          <Link href="/" className={styles.back}>
+            ← חזרה
+          </Link>
+          <div className={styles.tagInfo}>
+            <h1 className={styles.tagTitle}>#{tag}</h1>
+            <p className={styles.tagCount}>
+              {!loading && `${posts.length} פוסטים`}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <MasonryFeed
-        posts={posts}
-        loading={loading}
-        isLiked={isLiked}
-        isSaved={isSaved}
-        onLike={(id) => user ? handleLike(id) : toast("יש להתחבר")}
-        onSave={(id) => user ? handleSave(id) : toast("יש להתחבר")}
-      />
+        <MasonryFeed
+          posts={posts}
+          loading={loading}
+          isLiked={isLiked}
+          isSaved={isSaved}
+          onLike={(id) => user ? handleLike(id) : toast("יש להתחבר")}
+          onSave={(id) => user ? handleSave(id) : toast("יש להתחבר")}
+        />
+      </main>
     </>
   );
 }

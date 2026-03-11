@@ -49,7 +49,11 @@ export default function BoardsSidebar({ onClose }: BoardsSidebarProps) {
               key={board.id}
               className={`${styles.boardCard} ${board.id === mainBoardId ? styles.mainBoard : ""}`}
               style={{ backgroundColor: board.color + "15", borderColor: board.color + "30" }}
+              role="button"
+              tabIndex={0}
+              aria-label={`לוח: ${board.name}`}
               onClick={() => handleBoardClick(board.id)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleBoardClick(board.id); } }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <h3 style={{ color: board.color }}>{board.name}</h3>
