@@ -17,7 +17,7 @@
 
 /* Dark mode — tinted card bg: dark base with visible color tint */
 :global([data-theme="dark"]) .card {
-  background-color: color-mix(in srgb, var(--card-color, #FFFFFF) 35%, var(--bg-deep)) !important;
+  background-color: color-mix(in srgb, var(--card-color, #FFFFFF) 20%, var(--bg-deep)) !important;
 }
 
 :global([data-theme="dark"]) .typeBadge {

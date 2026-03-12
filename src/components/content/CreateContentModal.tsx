@@ -14,7 +14,7 @@ interface CreateContentModalProps {
   onClose: () => void;
 }
 
-const COLORS = ["#F5EBDE", "#E3EBF2", "#EAE0FA", "#DFF5E8", "#FAE4E4", "#F5EDDA"];
+const COLORS = ["#EFE3D4", "#D9E3EE", "#E0D4F6", "#D2EDDC", "#F4D8D8", "#EFE5CD"];
 
 const TYPE_OPTIONS: { key: PostType; label: string }[] = [
   { key: "note", label: "פתק" },
