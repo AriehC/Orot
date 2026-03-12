@@ -2,18 +2,15 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserProfile, updateUserProfile, getUserBoards, getUserSavedPosts } from "@/lib/firestore";
-import { uploadMedia } from "@/lib/storage";
-import { useFeed } from "@/hooks/useFeed";
-import { useLike } from "@/hooks/useLike";
-import { useSave } from "@/hooks/useSave";
-import { UserProfile, Board, Post } from "@/lib/types";
+import { getUserProfile, getUserBoards, getBoard } from "@/lib/firestore";
+import { UserProfile, Board } from "@/lib/types";
 import Navbar from "@/components/layout/Navbar";
-import MasonryFeed from "@/components/feed/MasonryFeed";
-import Modal from "@/components/ui/Modal";
+import ProfileHero from "@/components/profile/ProfileHero";
+import ProfileSocialLinks from "@/components/profile/ProfileSocialLinks";
+import ProfileFeaturedBoards from "@/components/profile/ProfileFeaturedBoards";
+import ProfileTabs from "@/components/profile/ProfileTabs";
+import EditProfileModal from "@/components/profile/EditProfileModal";
 import Spinner from "@/components/ui/Spinner";
 import EmptyState from "@/components/ui/EmptyState";
 import toast from "react-hot-toast";
@@ -21,28 +18,32 @@ import styles from "./page.module.css";
 
 export default function ProfilePage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = use(params);
-  const { user, profile: myProfile, refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const router = useRouter();
 
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<"content" | "saved" | "boards">("content");
   const [boards, setBoards] = useState<Board[]>([]);
-  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
-  const [savedLoading, setSavedLoading] = useState(false);
+  const [pinnedBoards, setPinnedBoards] = useState<Board[]>([]);
   const [showEdit, setShowEdit] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const isOwnProfile = user?.uid === userId;
-
-  const { posts: userPosts, loading: postsLoading } = useFeed({ authorId: userId });
-  const { isLiked, handleLike } = useLike();
-  const { isSaved, handleSave } = useSave();
 
   useEffect(() => {
     getUserProfile(userId)
       .then((p) => {
         setProfileUser(p);
         setLoading(false);
+        // Load pinned boards
+        if (p?.pinnedBoardIds?.length) {
+          Promise.all(p.pinnedBoardIds.map((id) => getBoard(id)))
+            .then((results) => {
+              setPinnedBoards(
+                results.filter((b): b is Board => b !== null && (b.isPublic || user?.uid === userId))
+              );
+            })
+            .catch(console.error);
+        }
       })
       .catch((error) => {
         console.error("ProfilePage: failed to load profile:", error);
@@ -54,273 +55,62 @@ export default function ProfilePage({ params }: { params: Promise<{ userId: stri
       .catch((error) => {
         console.error("ProfilePage: failed to load boards:", error);
       });
-  }, [userId]);
-
-  useEffect(() => {
-    if (activeTab === "saved" && isOwnProfile && user) {
-      setSavedLoading(true);
-      getUserSavedPosts(user.uid)
-        .then((posts) => {
-          setSavedPosts(posts);
-          setSavedLoading(false);
-        })
-        .catch((error) => {
-          console.error("ProfilePage: failed to load saved posts:", error);
-          toast.error("שגיאה בטעינת הפוסטים השמורים");
-          setSavedLoading(false);
-        });
-    }
-  }, [activeTab, isOwnProfile, user]);
+  }, [userId, user?.uid]);
 
   if (loading) return <Spinner fullPage />;
   if (!profileUser) return <EmptyState text="משתמש לא נמצא" />;
-
-  const initials = profileUser.displayName?.charAt(0) || "א";
 
   return (
     <>
       <Navbar searchQuery="" onSearchChange={() => {}} onCreateClick={() => router.push("/")} />
 
-      <main id="main-content">
-      <div className={styles.container}>
-        {/* Header */}
-        <div className={styles.header}>
-          <div className={styles.avatarLarge}>
-            {profileUser.photoURL ? (
-              <img src={profileUser.photoURL} alt={profileUser.displayName} />
-            ) : (
-              initials
-            )}
-          </div>
-          <div className={styles.info}>
-            <h1 className={styles.name}>{profileUser.displayName}</h1>
-            {profileUser.bio && <p className={styles.bio}>{profileUser.bio}</p>}
-            <div className={styles.stats}>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>{userPosts.length}</div>
-                <div className={styles.statLabel}>פוסטים</div>
-              </div>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>{boards.length}</div>
-                <div className={styles.statLabel}>לוחות</div>
-              </div>
-            </div>
-          </div>
-          {isOwnProfile && (
-            <button className={styles.editBtn} onClick={() => setShowEdit(true)}>
-              עריכת פרופיל
-            </button>
-          )}
-        </div>
+      <main id="main-content" className={styles.main}>
+        <ProfileHero
+          profile={profileUser}
+          postCount={0}
+          boardCount={boards.length}
+          isOwnProfile={isOwnProfile}
+          onEditClick={() => setShowEdit(true)}
+        />
 
-        {/* Tabs */}
-        <div className={styles.tabs} role="tablist" aria-label="תוכן פרופיל">
-          <button
-            className={activeTab === "content" ? styles.tabActive : styles.tab}
-            onClick={() => setActiveTab("content")}
-            role="tab"
-            aria-selected={activeTab === "content"}
-            aria-controls="tabpanel-content"
-            id="tab-content"
-          >
-            התוכן שלי
-          </button>
-          {isOwnProfile && (
-            <button
-              className={activeTab === "saved" ? styles.tabActive : styles.tab}
-              onClick={() => setActiveTab("saved")}
-              role="tab"
-              aria-selected={activeTab === "saved"}
-              aria-controls="tabpanel-saved"
-              id="tab-saved"
-            >
-              שמורים
-            </button>
-          )}
-          <button
-            className={activeTab === "boards" ? styles.tabActive : styles.tab}
-            onClick={() => setActiveTab("boards")}
-            role="tab"
-            aria-selected={activeTab === "boards"}
-            aria-controls="tabpanel-boards"
-            id="tab-boards"
-          >
-            לוחות
-          </button>
-        </div>
-      </div>
+        <ProfileSocialLinks links={profileUser.socialLinks || []} />
 
-      {/* Tab Content */}
-      {activeTab === "content" && (
-        <div role="tabpanel" id="tabpanel-content" aria-labelledby="tab-content">
-          <MasonryFeed
-            posts={userPosts}
-            loading={postsLoading}
-            isLiked={isLiked}
-            isSaved={isSaved}
-            onLike={handleLike}
-            onSave={handleSave}
+        <ProfileFeaturedBoards boards={pinnedBoards} />
+
+        <div className={styles.tabsSection}>
+          <ProfileTabs
+            userId={userId}
+            boards={boards}
+            mainBoardId={profileUser.mainBoardId}
+            isOwnProfile={isOwnProfile}
           />
         </div>
-      )}
-
-      {activeTab === "saved" && isOwnProfile && (
-        <div role="tabpanel" id="tabpanel-saved" aria-labelledby="tab-saved">
-          <MasonryFeed
-            posts={savedPosts}
-            loading={savedLoading}
-            isLiked={isLiked}
-            isSaved={isSaved}
-            onLike={handleLike}
-            onSave={handleSave}
-          />
-        </div>
-      )}
-
-      {activeTab === "boards" && (
-        <div role="tabpanel" id="tabpanel-boards" aria-labelledby="tab-boards" className={styles.container}>
-          {boards.length === 0 ? (
-            <EmptyState text="עדיין אין לוחות" />
-          ) : (
-            <div className={styles.boardsGrid}>
-              {boards.map((board) => (
-                <Link
-                  key={board.id}
-                  href={`/boards/${board.id}`}
-                  className={styles.boardCard}
-                  style={{ backgroundColor: board.color + "15" }}
-                >
-                  <h3 style={{ color: board.color }}>{board.name}</h3>
-                  <p>{board.description}</p>
-                  <span className={styles.boardCardMeta}>
-                    {board.itemCount} פריטים • {board.isPublic ? "ציבורי" : "פרטי"}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       </main>
 
-      {/* Edit Profile Modal */}
       {showEdit && (
         <EditProfileModal
           profile={profileUser}
+          boards={boards}
           onClose={() => setShowEdit(false)}
           onSaved={(updated) => {
             setProfileUser(updated);
             refreshProfile();
             setShowEdit(false);
+            // Refresh pinned boards
+            if (updated.pinnedBoardIds?.length) {
+              Promise.all(updated.pinnedBoardIds.map((id) => getBoard(id)))
+                .then((results) => {
+                  setPinnedBoards(
+                    results.filter((b): b is Board => b !== null && (b.isPublic || isOwnProfile))
+                  );
+                })
+                .catch(console.error);
+            } else {
+              setPinnedBoards([]);
+            }
           }}
         />
       )}
     </>
-  );
-}
-
-function EditProfileModal({
-  profile,
-  onClose,
-  onSaved,
-}: {
-  profile: UserProfile;
-  onClose: () => void;
-  onSaved: (updated: UserProfile) => void;
-}) {
-  const { user } = useAuth();
-  const [displayName, setDisplayName] = useState(profile.displayName);
-  const [bio, setBio] = useState(profile.bio || "");
-  const [photoURL, setPhotoURL] = useState(profile.photoURL);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
-  }
-
-  async function handleSave() {
-    if (!user || !displayName.trim()) return;
-    setSaving(true);
-    try {
-      let newPhotoURL = photoURL;
-      if (photoFile) {
-        newPhotoURL = await uploadMedia(user.uid, photoFile);
-      }
-      await updateUserProfile(user.uid, {
-        displayName: displayName.trim(),
-        bio: bio.trim(),
-        photoURL: newPhotoURL,
-      });
-      toast("הפרופיל עודכן");
-      onSaved({ ...profile, displayName: displayName.trim(), bio: bio.trim(), photoURL: newPhotoURL });
-    } catch {
-      toast.error("שגיאה בעדכון הפרופיל");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const displayPhoto = photoPreview || photoURL;
-  const initials = displayName?.charAt(0) || "א";
-
-  return (
-    <Modal title="עריכת פרופיל" onClose={onClose}>
-      <div className={styles.editForm}>
-        <div className={styles.photoSection}>
-          <label className={styles.photoUpload} aria-label="העלאת תמונת פרופיל">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              style={{ display: "none" }}
-              aria-label="בחירת תמונת פרופיל"
-            />
-            <div className={styles.photoPreview}>
-              {displayPhoto ? (
-                <img src={displayPhoto} alt="תמונת פרופיל" />
-              ) : (
-                <span>{initials}</span>
-              )}
-              <div className={styles.photoOverlay} aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-              </div>
-            </div>
-          </label>
-          <span className={styles.photoHint}>לחצו לשינוי תמונה</span>
-        </div>
-        <div>
-          <label htmlFor="edit-display-name">שם תצוגה</label>
-          <input
-            id="edit-display-name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="השם שלך"
-            autoComplete="name"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="edit-bio">ביו</label>
-          <textarea
-            id="edit-bio"
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="ספרו משהו על עצמכם..."
-          />
-        </div>
-        <button className={styles.saveBtn} onClick={handleSave} disabled={saving || !displayName.trim()}>
-          {saving ? "שומר..." : "שמירה"}
-        </button>
-      </div>
-    </Modal>
   );
 }

@@ -467,8 +467,22 @@ const SAMPLE_POSTS = [
   },
 ];
 
+async function deleteCollection(collectionName: string) {
+  const snapshot = await db.collection(collectionName).get();
+  if (snapshot.empty) return 0;
+  const batch = db.batch();
+  snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+  await batch.commit();
+  return snapshot.size;
+}
+
 async function seed() {
   console.log("🌱 Seeding Orot database...\n");
+
+  // Clean existing data
+  const deletedPosts = await deleteCollection("posts");
+  const deletedTags = await deleteCollection("tags");
+  console.log(`🧹 Cleaned ${deletedPosts} old posts, ${deletedTags} old tags\n`);
 
   // Create seed user
   await db.collection("users").doc(SEED_USER_ID).set(SEED_USER);

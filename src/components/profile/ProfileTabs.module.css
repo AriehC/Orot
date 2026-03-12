@@ -1,0 +1,88 @@
+.tabsWrapper {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-padding);
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.tab {
+  padding: 12px 24px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tabActive {
+  composes: tab;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tabActive::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  inset-inline: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+/* Boards */
+.boardsContainer {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-padding);
+}
+
+.boardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.boardCard {
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.boardCard:hover {
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+.boardCard h3 {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.boardCard p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.boardCardMeta {
+  font-size: 11px;
+  color: var(--text-muted);
+}

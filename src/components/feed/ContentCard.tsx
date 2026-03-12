@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Post } from "@/lib/types";
@@ -14,6 +15,7 @@ interface ContentCardProps {
   onLike: (postId: string) => void;
   onSave: (postId: string) => void;
   onAddToBoard?: (postId: string) => void;
+  onRemoveFromBoard?: (postId: string) => void;
   onShowBoards?: (postId: string) => void;
   onClick?: (post: Post) => void;
 }
@@ -29,24 +31,26 @@ function isNewPost(createdAt: { toMillis: () => number }): boolean {
   return Date.now() - createdAt.toMillis() < 86400000;
 }
 
-export default function ContentCard({ post, index, isLiked, isSaved, onLike, onSave, onAddToBoard, onShowBoards, onClick }: ContentCardProps) {
+export default function ContentCard({ post, index, isLiked, isSaved, onLike, onSave, onAddToBoard, onRemoveFromBoard, onShowBoards, onClick }: ContentCardProps) {
   const typeConfig = TYPE_CONFIG[post.type];
   const isNew = isNewPost(post.createdAt);
   const boardCount = post.boardCount || 0;
+  const [imageError, setImageError] = useState(false);
 
   return (
     <article
       className={styles.card}
       style={{
         backgroundColor: post.color || "#FFFFFF",
+        "--card-color": post.color || "#FFFFFF",
         animationDelay: `${index * 0.06}s`,
-      }}
+      } as React.CSSProperties}
       tabIndex={onClick ? 0 : undefined}
       aria-label={post.title}
       onClick={() => onClick?.(post)}
       onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(post); } } : undefined}
     >
-      {post.mediaURL && (post.type === "image" || post.type === "video") && (
+      {post.mediaURL && !imageError && (
         <div className={styles.imageWrapper}>
           <Image
             className={styles.cardImage}
@@ -54,6 +58,7 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
             alt={post.title}
             fill
             sizes="(max-width: 500px) 100vw, (max-width: 800px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            onError={() => setImageError(true)}
           />
           {post.type === "video" && (
             <div className={styles.videoOverlay}>
@@ -85,10 +90,12 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
 
         <h3 className={styles.cardTitle}>{post.title}</h3>
 
-        {post.type === "quote" ? (
-          <p className={styles.quoteBody}>{post.body}</p>
-        ) : (
-          <p className={styles.cardText}>{post.body}</p>
+        {post.body && (
+          post.type === "quote" ? (
+            <p className={styles.quoteBody}>{post.body}</p>
+          ) : (
+            <p className={styles.cardText}>{post.body}</p>
+          )
         )}
 
         {post.tags.length > 0 && (
@@ -158,7 +165,20 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
               </svg>
             </button>
-            {onAddToBoard && (
+            {onRemoveFromBoard && (
+              <button
+                className={`${styles.actionBtn} ${styles.removeBtn}`}
+                onClick={(e) => { e.stopPropagation(); onRemoveFromBoard(post.id); }}
+                title="הסר מהלוח"
+                aria-label="הסר מהלוח"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+              </button>
+            )}
+            {onAddToBoard && !onRemoveFromBoard && (
               <button
                 className={styles.actionBtn}
                 onClick={(e) => { e.stopPropagation(); onAddToBoard(post.id); }}

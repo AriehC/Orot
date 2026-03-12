@@ -37,6 +37,7 @@ export default function PostDetailModal({
 }: PostDetailModalProps) {
   const [showEdit, setShowEdit] = useState(false);
   const [currentPost, setCurrentPost] = useState(post);
+  const [imageError, setImageError] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const typeConfig = TYPE_CONFIG[currentPost.type];
@@ -121,7 +122,7 @@ export default function PostDetailModal({
         role="dialog"
         aria-modal="true"
         aria-label={currentPost.title}
-        style={{ backgroundColor: currentPost.color || "#FFFFFF" }}
+        style={{ backgroundColor: currentPost.color || "#FFFFFF", "--card-color": currentPost.color || "#FFFFFF" } as React.CSSProperties}
         onClick={(e) => e.stopPropagation()}
       >
         <button className={styles.closeBtn} onClick={onClose} aria-label="סגור">
@@ -140,11 +141,12 @@ export default function PostDetailModal({
           </button>
         )}
 
-        {currentPost.mediaURL && (currentPost.type === "image" || currentPost.type === "video") && (
+        {currentPost.mediaURL && !imageError && (
           <img
             className={styles.media}
             src={currentPost.mediaURL}
             alt={currentPost.title}
+            onError={() => setImageError(true)}
           />
         )}
 
@@ -158,10 +160,12 @@ export default function PostDetailModal({
 
           <h2 className={styles.title}>{currentPost.title}</h2>
 
-          {currentPost.type === "quote" ? (
-            <p className={styles.quoteBody}>{currentPost.body}</p>
-          ) : (
-            <p className={styles.text}>{currentPost.body}</p>
+          {currentPost.body && (
+            currentPost.type === "quote" ? (
+              <p className={styles.quoteBody}>{currentPost.body}</p>
+            ) : (
+              <p className={styles.text}>{currentPost.body}</p>
+            )
           )}
 
           {currentPost.tags.length > 0 && (

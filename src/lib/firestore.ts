@@ -31,11 +31,15 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     if (!snap.exists()) return null;
     const data = snap.data();
     return {
-      id: snap.id,
-      followerCount: 0,
-      followingCount: 0,
-      mainBoardId: null,
       ...data,
+      id: snap.id,
+      followerCount: data.followerCount ?? 0,
+      followingCount: data.followingCount ?? 0,
+      mainBoardId: data.mainBoardId ?? null,
+      tagline: data.tagline ?? "",
+      coverImageURL: data.coverImageURL ?? null,
+      socialLinks: data.socialLinks ?? [],
+      pinnedBoardIds: data.pinnedBoardIds ?? [],
     } as UserProfile;
   } catch (error) {
     console.error("getUserProfile failed:", error);
@@ -48,6 +52,109 @@ export async function updateUserProfile(userId: string, data: Partial<Omit<UserP
     await updateDoc(doc(db, "users", userId), { ...data, updatedAt: Timestamp.now() });
   } catch (error) {
     console.error("updateUserProfile failed:", error);
+    throw error;
+  }
+}
+
+export async function deleteUserAccount(userId: string) {
+  try {
+    // Delete all user's posts (each one cascade-deletes its own relations)
+    const postsSnap = await getDocs(
+      query(collection(db, "posts"), where("authorId", "==", userId))
+    );
+    for (const d of postsSnap.docs) {
+      await deletePost(d.id);
+    }
+
+    // Delete all user's boards (each one cascade-deletes its own relations)
+    const boardsSnap = await getDocs(
+      query(collection(db, "boards"), where("ownerId", "==", userId))
+    );
+    for (const d of boardsSnap.docs) {
+      await deleteBoard(d.id);
+    }
+
+    // Delete user's likes on other posts and decrement likeCount
+    const likesSnap = await getDocs(
+      query(collection(db, "likes"), where("userId", "==", userId))
+    );
+    if (!likesSnap.empty) {
+      const batch = writeBatch(db);
+      likesSnap.docs.forEach((d) => {
+        batch.delete(d.ref);
+        batch.update(doc(db, "posts", d.data().postId), { likeCount: increment(-1) });
+      });
+      await batch.commit();
+    }
+
+    // Delete user's saves on other posts and decrement saveCount
+    const savesSnap = await getDocs(
+      query(collection(db, "saves"), where("userId", "==", userId))
+    );
+    if (!savesSnap.empty) {
+      const batch = writeBatch(db);
+      savesSnap.docs.forEach((d) => {
+        batch.delete(d.ref);
+        batch.update(doc(db, "posts", d.data().postId), { saveCount: increment(-1) });
+      });
+      await batch.commit();
+    }
+
+    // Delete user's board likes and decrement board likeCount
+    const boardLikesSnap = await getDocs(
+      query(collection(db, "boardLikes"), where("userId", "==", userId))
+    );
+    if (!boardLikesSnap.empty) {
+      const batch = writeBatch(db);
+      boardLikesSnap.docs.forEach((d) => {
+        batch.delete(d.ref);
+        batch.update(doc(db, "boards", d.data().boardId), { likeCount: increment(-1) });
+      });
+      await batch.commit();
+    }
+
+    // Delete user's board follows and decrement board followerCount
+    const boardFollowsSnap = await getDocs(
+      query(collection(db, "boardFollows"), where("userId", "==", userId))
+    );
+    if (!boardFollowsSnap.empty) {
+      const batch = writeBatch(db);
+      boardFollowsSnap.docs.forEach((d) => {
+        batch.delete(d.ref);
+        batch.update(doc(db, "boards", d.data().boardId), { followerCount: increment(-1) });
+      });
+      await batch.commit();
+    }
+
+    // Delete user follow relationships (both directions) and update counts
+    const followingSnap = await getDocs(
+      query(collection(db, "userFollows"), where("followerId", "==", userId))
+    );
+    if (!followingSnap.empty) {
+      const batch = writeBatch(db);
+      followingSnap.docs.forEach((d) => {
+        batch.delete(d.ref);
+        batch.update(doc(db, "users", d.data().followingId), { followerCount: increment(-1) });
+      });
+      await batch.commit();
+    }
+
+    const followersSnap = await getDocs(
+      query(collection(db, "userFollows"), where("followingId", "==", userId))
+    );
+    if (!followersSnap.empty) {
+      const batch = writeBatch(db);
+      followersSnap.docs.forEach((d) => {
+        batch.delete(d.ref);
+        batch.update(doc(db, "users", d.data().followerId), { followingCount: increment(-1) });
+      });
+      await batch.commit();
+    }
+
+    // Delete the user profile document
+    await deleteDoc(doc(db, "users", userId));
+  } catch (error) {
+    console.error("deleteUserAccount failed:", error);
     throw error;
   }
 }
@@ -190,6 +297,54 @@ export async function updatePost(
 
 export async function deletePost(postId: string) {
   try {
+    // Read the post first to get its tags
+    const postSnap = await getDoc(doc(db, "posts", postId));
+    const postData = postSnap.exists() ? postSnap.data() : null;
+
+    // Delete all board items referencing this post and decrement board itemCounts
+    const boardItemsSnap = await getDocs(
+      query(collection(db, "boardItems"), where("postId", "==", postId))
+    );
+    if (!boardItemsSnap.empty) {
+      const batch = writeBatch(db);
+      boardItemsSnap.docs.forEach((d) => {
+        batch.delete(d.ref);
+        batch.update(doc(db, "boards", d.data().boardId), { itemCount: increment(-1) });
+      });
+      await batch.commit();
+    }
+
+    // Delete all likes for this post
+    const likesSnap = await getDocs(
+      query(collection(db, "likes"), where("postId", "==", postId))
+    );
+    if (!likesSnap.empty) {
+      const batch = writeBatch(db);
+      likesSnap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+
+    // Delete all saves for this post
+    const savesSnap = await getDocs(
+      query(collection(db, "saves"), where("postId", "==", postId))
+    );
+    if (!savesSnap.empty) {
+      const batch = writeBatch(db);
+      savesSnap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+
+    // Decrement tag counts
+    if (postData && postData.tags?.length > 0) {
+      const batch = writeBatch(db);
+      for (const tag of postData.tags as string[]) {
+        const tagRef = doc(db, "tags", tag.toLowerCase());
+        batch.update(tagRef, { postCount: increment(-1) });
+      }
+      await batch.commit();
+    }
+
+    // Delete the post itself
     await deleteDoc(doc(db, "posts", postId));
   } catch (error) {
     console.error("deletePost failed:", error);
@@ -379,12 +534,41 @@ export async function updateBoard(boardId: string, data: Partial<Omit<Board, "id
 
 export async function deleteBoard(boardId: string) {
   try {
-    const q = query(collection(db, "boardItems"), where("boardId", "==", boardId));
-    const snap = await getDocs(q);
-    const batch = writeBatch(db);
-    snap.docs.forEach((d) => batch.delete(d.ref));
-    batch.delete(doc(db, "boards", boardId));
-    await batch.commit();
+    // Delete board items and decrement post boardCounts
+    const itemsSnap = await getDocs(
+      query(collection(db, "boardItems"), where("boardId", "==", boardId))
+    );
+    if (!itemsSnap.empty) {
+      const batch = writeBatch(db);
+      itemsSnap.docs.forEach((d) => {
+        batch.delete(d.ref);
+        batch.update(doc(db, "posts", d.data().postId), { boardCount: increment(-1) });
+      });
+      await batch.commit();
+    }
+
+    // Delete board likes
+    const likesSnap = await getDocs(
+      query(collection(db, "boardLikes"), where("boardId", "==", boardId))
+    );
+    if (!likesSnap.empty) {
+      const batch = writeBatch(db);
+      likesSnap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+
+    // Delete board follows
+    const followsSnap = await getDocs(
+      query(collection(db, "boardFollows"), where("boardId", "==", boardId))
+    );
+    if (!followsSnap.empty) {
+      const batch = writeBatch(db);
+      followsSnap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+
+    // Delete the board itself
+    await deleteDoc(doc(db, "boards", boardId));
   } catch (error) {
     console.error("deleteBoard failed:", error);
     throw error;

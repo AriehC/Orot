@@ -15,14 +15,15 @@ export default function ClientProviders({ children }: { children: ReactNode }) {
         toastOptions={{
           duration: 2500,
           style: {
-            background: "var(--text)",
-            color: "white",
+            background: "var(--card-bg)",
+            color: "var(--text)",
             borderRadius: "12px",
             fontSize: "13px",
             fontWeight: 500,
             fontFamily: "var(--font-body)",
             direction: "rtl",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+            boxShadow: "var(--shadow-lg)",
+            border: "1px solid var(--border)",
           },
         }}
       />

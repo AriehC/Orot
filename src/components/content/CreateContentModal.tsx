@@ -2,7 +2,7 @@
 
 import { useState, useRef, KeyboardEvent } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { createPost } from "@/lib/firestore";
+import { createPost, addToBoard } from "@/lib/firestore";
 import { uploadMedia } from "@/lib/storage";
 import { PostType } from "@/lib/types";
 import { isInstagramURL, parseCaption, extractHashtags } from "@/lib/instagram";
@@ -116,7 +116,7 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
         mediaType = mediaFile.type.startsWith("video/") ? "video" : "image";
       }
 
-      await createPost({
+      const postId = await createPost({
         type,
         title: title.trim(),
         body: body.trim(),
@@ -131,6 +131,15 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
         sourceURL: sourceURL,
         sourceType: sourceURL ? "instagram" : null,
       });
+
+      // Auto-add to main board
+      if (profile.mainBoardId) {
+        try {
+          await addToBoard(profile.mainBoardId, postId, user.uid);
+        } catch (err) {
+          console.error("Auto-add to main board failed:", err);
+        }
+      }
 
       toast("הפתק נוצר בהצלחה ✨");
       onClose();
@@ -233,35 +242,33 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
         </div>
       </div>
 
-      {(type === "image" || type === "video") && (
-        <div className={styles.formGroup}>
-          <label>מדיה</label>
-          {mediaPreview ? (
-            <div className={styles.uploadPreview}>
-              <img src={mediaPreview} alt="תצוגה מקדימה" />
-              <button className={styles.removeMedia} onClick={removeMedia} type="button" aria-label="הסר מדיה">×</button>
-            </div>
-          ) : (
-            <div
-              className={styles.uploadZone}
-              role="button"
-              tabIndex={0}
-              aria-label={`העלאת ${type === "video" ? "וידאו" : "תמונה"}`}
-              onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
-            >
-              לחצו להעלאת {type === "video" ? "וידאו" : "תמונה"}
-            </div>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={type === "video" ? "video/*" : "image/*"}
-            onChange={handleFileChange}
-            style={{ display: "none" }}
-          />
-        </div>
-      )}
+      <div className={styles.formGroup}>
+        <label>תמונה {type !== "image" && type !== "video" ? "(אופציונלי)" : ""}</label>
+        {mediaPreview ? (
+          <div className={styles.uploadPreview}>
+            <img src={mediaPreview} alt="תצוגה מקדימה" />
+            <button className={styles.removeMedia} onClick={removeMedia} type="button" aria-label="הסר מדיה">×</button>
+          </div>
+        ) : (
+          <div
+            className={styles.uploadZone}
+            role="button"
+            tabIndex={0}
+            aria-label={`העלאת ${type === "video" ? "וידאו" : "תמונה"}`}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
+          >
+            לחצו להעלאת {type === "video" ? "וידאו" : "תמונה"}
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={type === "video" ? "video/*" : "image/*"}
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+        />
+      </div>
 
       <div className={styles.formGroup}>
         <label>צבע</label>

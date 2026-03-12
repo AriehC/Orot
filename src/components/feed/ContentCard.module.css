@@ -15,9 +15,9 @@
   transform: translateY(-3px);
 }
 
-/* Dark mode */
+/* Dark mode — subtle tint of the post color mixed into dark card bg */
 :global([data-theme="dark"]) .card {
-  background-color: var(--card-bg) !important;
+  background-color: color-mix(in srgb, var(--card-color, #FFFFFF) 12%, var(--card-bg)) !important;
 }
 
 :global([data-theme="dark"]) .typeBadge {
@@ -237,6 +237,11 @@
 
 .saved {
   color: var(--accent);
+}
+
+.removeBtn:hover {
+  color: var(--like);
+  background: var(--like-soft);
 }
 
 /* Badge row */

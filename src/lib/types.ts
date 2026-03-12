@@ -2,6 +2,12 @@ import { Timestamp } from "firebase/firestore";
 
 export type PostType = "note" | "quote" | "image" | "video";
 export type FeedSort = "trending" | "recent" | "random";
+export type SocialPlatform = "instagram" | "twitter" | "youtube" | "tiktok" | "spotify" | "telegram" | "website";
+
+export interface SocialLink {
+  platform: SocialPlatform;
+  url: string;
+}
 
 export interface UserProfile {
   id: string;
@@ -9,6 +15,10 @@ export interface UserProfile {
   email: string;
   photoURL: string | null;
   bio: string;
+  tagline: string;
+  coverImageURL: string | null;
+  socialLinks: SocialLink[];
+  pinnedBoardIds: string[];
   mainBoardId: string | null;
   followerCount: number;
   followingCount: number;

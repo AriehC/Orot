@@ -14,6 +14,7 @@ interface MasonryFeedProps {
   onLike: (postId: string) => void;
   onSave: (postId: string) => void;
   onAddToBoard?: (postId: string) => void;
+  onRemoveFromBoard?: (postId: string) => void;
   onShowBoards?: (postId: string) => void;
   onPostClick?: (post: Post) => void;
 }
@@ -48,6 +49,7 @@ export default function MasonryFeed({
   onLike,
   onSave,
   onAddToBoard,
+  onRemoveFromBoard,
   onShowBoards,
   onPostClick,
 }: MasonryFeedProps) {
@@ -95,6 +97,7 @@ export default function MasonryFeed({
             onLike={onLike}
             onSave={onSave}
             onAddToBoard={onAddToBoard}
+            onRemoveFromBoard={onRemoveFromBoard}
             onShowBoards={onShowBoards}
             onClick={onPostClick}
           />

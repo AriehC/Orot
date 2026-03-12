@@ -23,7 +23,7 @@
 }
 
 :global([data-theme="dark"]) .card {
-  background-color: var(--card-bg) !important;
+  background-color: color-mix(in srgb, var(--card-color, #FFFFFF) 12%, var(--card-bg)) !important;
 }
 
 .closeBtn {

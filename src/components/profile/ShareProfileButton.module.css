@@ -1,0 +1,21 @@
+.shareBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.shareBtn:hover {
+  border-color: var(--accent-soft);
+  color: var(--accent);
+  background: var(--accent-glow);
+}

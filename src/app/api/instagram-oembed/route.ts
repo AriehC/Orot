@@ -4,27 +4,48 @@ import { NextRequest, NextResponse } from "next/server";
  * Server-side proxy for Instagram oEmbed API.
  * GET /api/instagram-oembed?url=<encoded instagram URL>
  *
- * Uses the public oEmbed endpoint (no access token required).
- * Returns { title, thumbnail_url, author_name } on success.
+ * Uses Facebook Graph API oEmbed endpoint.
+ * Set INSTAGRAM_ACCESS_TOKEN env var (Facebook App token) for authenticated requests.
+ * Falls back to the public endpoint if no token is set.
  */
 export async function GET(req: NextRequest) {
-  const url = req.nextUrl.searchParams.get("url");
+  const rawURL = req.nextUrl.searchParams.get("url");
 
-  if (!url || !/instagram\.com\/(?:p|reel|tv)\/[\w-]+/i.test(url)) {
+  if (!rawURL || !/instagram\.com\/(?:p|reel|tv)\/[\w-]+/i.test(rawURL)) {
     return NextResponse.json({ error: "Invalid Instagram URL" }, { status: 400 });
   }
 
+  // Strip query parameters from Instagram URL (e.g. ?img_index=1)
+  const cleanURL = rawURL.replace(/\?.*$/, "");
+
   try {
-    const oembedURL = `https://api.instagram.com/oembed/?url=${encodeURIComponent(url)}&omitscript=true`;
+    const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+    let oembedURL: string;
+
+    if (token) {
+      // Authenticated Facebook Graph API endpoint
+      oembedURL = `https://graph.facebook.com/v21.0/instagram_oembed?url=${encodeURIComponent(cleanURL)}&access_token=${token}&omitscript=true`;
+    } else {
+      // Public endpoint (may be rate-limited or blocked)
+      oembedURL = `https://api.instagram.com/oembed/?url=${encodeURIComponent(cleanURL)}&omitscript=true`;
+    }
+
     const res = await fetch(oembedURL, {
       headers: { "User-Agent": "Orot/1.0" },
       next: { revalidate: 3600 },
     });
 
     if (!res.ok) {
+      const status = res.status;
+      if (status === 401 || status === 403) {
+        return NextResponse.json(
+          { error: "Instagram API authentication failed" },
+          { status: 401 },
+        );
+      }
       return NextResponse.json(
         { error: "Could not fetch Instagram data" },
-        { status: res.status },
+        { status },
       );
     }
 
