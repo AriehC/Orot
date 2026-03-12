@@ -5,19 +5,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { updateUserProfile } from "@/lib/firestore";
 import { uploadMedia } from "@/lib/storage";
 import { UserProfile, SocialLink, SocialPlatform, Board } from "@/lib/types";
+import { PLATFORM_CONFIG, buildSocialURL, extractHandle } from "./ProfileSocialLinks";
 import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 import styles from "./EditProfileModal.module.css";
 
-const ALL_PLATFORMS: { value: SocialPlatform; label: string }[] = [
-  { value: "instagram", label: "Instagram" },
-  { value: "twitter", label: "X / Twitter" },
-  { value: "youtube", label: "YouTube" },
-  { value: "tiktok", label: "TikTok" },
-  { value: "spotify", label: "Spotify" },
-  { value: "telegram", label: "Telegram" },
-  { value: "website", label: "אתר" },
-];
+const ALL_PLATFORMS = Object.entries(PLATFORM_CONFIG).map(([key, val]) => ({
+  value: key as SocialPlatform,
+  label: val.label,
+  icon: val.icon,
+  placeholder: val.placeholder,
+}));
 
 interface EditProfileModalProps {
   profile: UserProfile;
@@ -47,10 +45,14 @@ export default function EditProfileModal({
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
 
-  // Social links
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(
-    profile.socialLinks || []
-  );
+  // Social links — store as map of platform → handle for editing
+  const [socialHandles, setSocialHandles] = useState<Partial<Record<SocialPlatform, string>>>(() => {
+    const map: Partial<Record<SocialPlatform, string>> = {};
+    for (const link of profile.socialLinks || []) {
+      map[link.platform] = extractHandle(link.platform, link.url);
+    }
+    return map;
+  });
 
   // Pinned boards
   const [pinnedBoardIds, setPinnedBoardIds] = useState<string[]>(
@@ -73,27 +75,19 @@ export default function EditProfileModal({
     setCoverPreview(URL.createObjectURL(file));
   }
 
-  function addSocialLink() {
-    if (socialLinks.length >= 8) return;
-    // Pick first platform not yet used
-    const used = new Set(socialLinks.map((l) => l.platform));
-    const next = ALL_PLATFORMS.find((p) => !used.has(p.value));
-    if (!next) return;
-    setSocialLinks([...socialLinks, { platform: next.value, url: "" }]);
+  function togglePlatform(platform: SocialPlatform) {
+    setSocialHandles((prev) => {
+      if (platform in prev) {
+        const next = { ...prev };
+        delete next[platform];
+        return next;
+      }
+      return { ...prev, [platform]: "" };
+    });
   }
 
-  function removeSocialLink(index: number) {
-    setSocialLinks(socialLinks.filter((_, i) => i !== index));
-  }
-
-  function updateSocialLink(index: number, field: "platform" | "url", value: string) {
-    const updated = [...socialLinks];
-    if (field === "platform") {
-      updated[index] = { ...updated[index], platform: value as SocialPlatform };
-    } else {
-      updated[index] = { ...updated[index], url: value };
-    }
-    setSocialLinks(updated);
+  function updateHandle(platform: SocialPlatform, value: string) {
+    setSocialHandles((prev) => ({ ...prev, [platform]: value }));
   }
 
   function togglePinnedBoard(boardId: string) {
@@ -118,8 +112,14 @@ export default function EditProfileModal({
         newCoverURL = await uploadMedia(user.uid, coverFile);
       }
 
-      // Filter out empty-URL social links
-      const validLinks = socialLinks.filter((l) => l.url.trim());
+      // Build social links from handles
+      const validLinks: SocialLink[] = Object.entries(socialHandles)
+        .filter(([, handle]) => handle && handle.trim())
+        .map(([platform, handle]) => ({
+          platform: platform as SocialPlatform,
+          url: buildSocialURL(platform as SocialPlatform, handle!),
+          handle: handle!.replace(/^@/, "").trim(),
+        }));
 
       await updateUserProfile(user.uid, {
         displayName: displayName.trim(),
@@ -258,50 +258,55 @@ export default function EditProfileModal({
         {/* Social Links */}
         <div className={styles.section}>
           <label className={styles.sectionLabel}>קישורים חברתיים</label>
-          {socialLinks.map((link, i) => (
-            <div key={i} className={styles.socialRow}>
-              <select
-                value={link.platform}
-                onChange={(e) => updateSocialLink(i, "platform", e.target.value)}
-                className={styles.platformSelect}
-                aria-label="פלטפורמה"
-              >
-                {ALL_PLATFORMS.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="url"
-                value={link.url}
-                onChange={(e) => updateSocialLink(i, "url", e.target.value)}
-                placeholder="https://..."
-                className={styles.urlInput}
-                dir="ltr"
-              />
-              <button
-                type="button"
-                className={styles.removeBtn}
-                onClick={() => removeSocialLink(i)}
-                aria-label="הסר קישור"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-          ))}
-          {socialLinks.length < 8 && (
-            <button
-              type="button"
-              className={styles.addLinkBtn}
-              onClick={addSocialLink}
-            >
-              + הוסיפו קישור
-            </button>
-          )}
+          <div className={styles.platformGrid}>
+            {ALL_PLATFORMS.map((p) => {
+              const isActive = p.value in socialHandles;
+              return (
+                <button
+                  key={p.value}
+                  type="button"
+                  className={isActive ? styles.platformChipActive : styles.platformChip}
+                  onClick={() => togglePlatform(p.value)}
+                  aria-pressed={isActive}
+                >
+                  <span className={styles.platformIcon}>{p.icon}</span>
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+          {Object.entries(socialHandles).map(([platform, handle]) => {
+            const config = ALL_PLATFORMS.find((p) => p.value === platform);
+            if (!config) return null;
+            const isFullURL = !PLATFORM_CONFIG[platform as SocialPlatform].urlTemplate;
+            return (
+              <div key={platform} className={styles.handleRow}>
+                <span className={styles.handleIcon}>{config.icon}</span>
+                <div className={styles.handleInputWrap}>
+                  {!isFullURL && <span className={styles.handleAt}>@</span>}
+                  <input
+                    type={isFullURL ? "url" : "text"}
+                    value={handle || ""}
+                    onChange={(e) => updateHandle(platform as SocialPlatform, e.target.value)}
+                    placeholder={config.placeholder}
+                    className={styles.handleInput}
+                    dir="ltr"
+                  />
+                </div>
+                <button
+                  type="button"
+                  className={styles.removeBtn}
+                  onClick={() => togglePlatform(platform as SocialPlatform)}
+                  aria-label="הסר"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         {/* Pinned Boards */}

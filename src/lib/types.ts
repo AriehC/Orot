@@ -2,11 +2,23 @@ import { Timestamp } from "firebase/firestore";
 
 export type PostType = "note" | "quote" | "image" | "video";
 export type FeedSort = "trending" | "recent" | "random";
-export type SocialPlatform = "instagram" | "twitter" | "youtube" | "tiktok" | "spotify" | "telegram" | "website";
+export type SocialPlatform =
+  | "instagram"
+  | "twitter"
+  | "youtube"
+  | "tiktok"
+  | "spotify"
+  | "telegram"
+  | "facebook"
+  | "threads"
+  | "linkedin"
+  | "whatsapp"
+  | "website";
 
 export interface SocialLink {
   platform: SocialPlatform;
   url: string;
+  handle?: string;
 }
 
 export interface UserProfile {

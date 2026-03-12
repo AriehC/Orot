@@ -482,14 +482,43 @@ async function seed() {
   // Clean existing data
   const deletedPosts = await deleteCollection("posts");
   const deletedTags = await deleteCollection("tags");
-  console.log(`🧹 Cleaned ${deletedPosts} old posts, ${deletedTags} old tags\n`);
+  const deletedBoardItems = await deleteCollection("boardItems");
+  const deletedBoards = await deleteCollection("boards");
+  console.log(`🧹 Cleaned ${deletedPosts} posts, ${deletedTags} tags, ${deletedBoards} boards, ${deletedBoardItems} boardItems\n`);
 
-  // Create seed user
-  await db.collection("users").doc(SEED_USER_ID).set(SEED_USER);
+  // Create main board for seed user
+  const mainBoardRef = db.collection("boards").doc();
+  const mainBoardId = mainBoardRef.id;
+  await mainBoardRef.set({
+    name: "האוסף שלי",
+    description: "הלוח הראשי שלי",
+    color: "#C17B4A",
+    ownerId: SEED_USER_ID,
+    ownerName: "אורות",
+    ownerPhotoURL: null,
+    isPublic: true,
+    likeCount: 0,
+    followerCount: 0,
+    postCount: 0,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  });
+  console.log("✅ Created main board for seed user");
+
+  // Create seed user with mainBoardId
+  await db.collection("users").doc(SEED_USER_ID).set({
+    ...SEED_USER,
+    mainBoardId,
+    tagline: "ציטוטים והשראה רוחנית",
+    coverImageURL: null,
+    socialLinks: [],
+    pinnedBoardIds: [],
+  });
   console.log("✅ Created seed user");
 
   // Collect all tags
   const tagCounts: Record<string, number> = {};
+  const postIds: string[] = [];
 
   // Create posts
   for (const post of SAMPLE_POSTS) {
@@ -507,20 +536,35 @@ async function seed() {
       mediaType: post.mediaURL ? "image" : null,
       likeCount: 0,
       saveCount: 0,
-      boardCount: 0,
+      boardCount: 1,
       sourceURL: null,
       sourceType: null,
       createdAt: post.createdAt,
       updatedAt: post.createdAt,
     };
 
-    await db.collection("posts").add(postData);
+    const postRef = await db.collection("posts").add(postData);
+    postIds.push(postRef.id);
     console.log(`  📝 ${post.title} — ${post.author}`);
 
     for (const tag of post.tags) {
       tagCounts[tag] = (tagCounts[tag] || 0) + 1;
     }
   }
+
+  // Add all posts to the main board
+  console.log("\n📋 Adding posts to main board...");
+  for (const postId of postIds) {
+    await db.collection("boardItems").add({
+      boardId: mainBoardId,
+      postId,
+      addedBy: SEED_USER_ID,
+      addedAt: Timestamp.now(),
+    });
+  }
+  // Update board post count
+  await mainBoardRef.update({ postCount: postIds.length });
+  console.log(`✅ Added ${postIds.length} posts to main board`);
 
   // Create tags
   for (const [name, count] of Object.entries(tagCounts)) {
