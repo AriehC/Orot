@@ -1,8 +1,8 @@
 :root {
   /* Colors */
-  --bg: #FAF6F1;
-  --bg-secondary: #F3EDE5;
-  --bg-deep: #EDE5D8;
+  --bg: #F5EDE2;
+  --bg-secondary: #EDE5D8;
+  --bg-deep: #E5DBCC;
   --card-bg: #FFFFFF;
   --text: #2D2A26;
   --text-secondary: #7A7267;
@@ -302,32 +302,7 @@ img {
   background: var(--accent);
 }
 
-/* Skip to content */
-.skipToContent {
-  position: absolute;
-  top: -100%;
-  left: 0;
-  z-index: 10000;
-  padding: 12px 24px;
-  background: var(--accent);
-  color: white;
-  font-family: var(--font-heading);
-  font-size: 14px;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  text-decoration: none;
-  transition: top 0.2s ease;
-}
-
-.skipToContent:focus {
-  top: 0;
-}
-
-/* Focus visible */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
+/* Focus visible — interactive elements */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -335,15 +310,6 @@ textarea:focus-visible,
 select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
 }
 
 /* Responsive */

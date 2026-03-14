@@ -65,7 +65,7 @@
 }
 
 .boardCard:hover {
-  transform: translateX(-4px);
+  transform: translateX(4px);
   box-shadow: var(--shadow-card);
 }
 

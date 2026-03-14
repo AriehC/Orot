@@ -5,11 +5,25 @@ import styles from "./ShareProfileButton.module.css";
 
 interface ShareProfileButtonProps {
   userId: string;
+  displayName?: string;
+  tagline?: string;
 }
 
-export default function ShareProfileButton({ userId }: ShareProfileButtonProps) {
+export default function ShareProfileButton({ userId, displayName, tagline }: ShareProfileButtonProps) {
   async function handleShare() {
     const url = `${window.location.origin}/profile/${userId}`;
+    const title = displayName || "פרופיל באורות";
+    const text = tagline ? `${title} — ${tagline}` : title;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch {
+        // User cancelled or share failed — fall through to clipboard
+      }
+    }
+
     try {
       await navigator.clipboard.writeText(url);
       toast("הקישור הועתק!");

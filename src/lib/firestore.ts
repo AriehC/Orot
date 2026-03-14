@@ -19,8 +19,10 @@ import {
   QueryConstraint,
   writeBatch,
   FirestoreError,
+  getCountFromServer,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { deleteMedia } from "./storage";
 import { UserProfile, Post, Board, BoardItem, Tag } from "./types";
 
 // ─── Users ────────────────────────────────────────────────────────────────
@@ -74,17 +76,31 @@ export async function deleteUserAccount(userId: string) {
       await deleteBoard(d.id);
     }
 
+    // Helper: commit batched operations in chunks of 249 pairs (each pair = delete + update = 2 ops, max 498)
+    async function batchDeleteWithDecrement(
+      snapDocs: typeof likesSnap.docs,
+      targetCollection: string,
+      idField: string,
+      countField: string
+    ) {
+      const CHUNK_SIZE = 249;
+      for (let i = 0; i < snapDocs.length; i += CHUNK_SIZE) {
+        const chunk = snapDocs.slice(i, i + CHUNK_SIZE);
+        const batch = writeBatch(db);
+        chunk.forEach((d) => {
+          batch.delete(d.ref);
+          batch.update(doc(db, targetCollection, d.data()[idField]), { [countField]: increment(-1) });
+        });
+        await batch.commit();
+      }
+    }
+
     // Delete user's likes on other posts and decrement likeCount
     const likesSnap = await getDocs(
       query(collection(db, "likes"), where("userId", "==", userId))
     );
     if (!likesSnap.empty) {
-      const batch = writeBatch(db);
-      likesSnap.docs.forEach((d) => {
-        batch.delete(d.ref);
-        batch.update(doc(db, "posts", d.data().postId), { likeCount: increment(-1) });
-      });
-      await batch.commit();
+      await batchDeleteWithDecrement(likesSnap.docs, "posts", "postId", "likeCount");
     }
 
     // Delete user's saves on other posts and decrement saveCount
@@ -92,12 +108,7 @@ export async function deleteUserAccount(userId: string) {
       query(collection(db, "saves"), where("userId", "==", userId))
     );
     if (!savesSnap.empty) {
-      const batch = writeBatch(db);
-      savesSnap.docs.forEach((d) => {
-        batch.delete(d.ref);
-        batch.update(doc(db, "posts", d.data().postId), { saveCount: increment(-1) });
-      });
-      await batch.commit();
+      await batchDeleteWithDecrement(savesSnap.docs, "posts", "postId", "saveCount");
     }
 
     // Delete user's board likes and decrement board likeCount
@@ -105,12 +116,7 @@ export async function deleteUserAccount(userId: string) {
       query(collection(db, "boardLikes"), where("userId", "==", userId))
     );
     if (!boardLikesSnap.empty) {
-      const batch = writeBatch(db);
-      boardLikesSnap.docs.forEach((d) => {
-        batch.delete(d.ref);
-        batch.update(doc(db, "boards", d.data().boardId), { likeCount: increment(-1) });
-      });
-      await batch.commit();
+      await batchDeleteWithDecrement(boardLikesSnap.docs, "boards", "boardId", "likeCount");
     }
 
     // Delete user's board follows and decrement board followerCount
@@ -118,12 +124,7 @@ export async function deleteUserAccount(userId: string) {
       query(collection(db, "boardFollows"), where("userId", "==", userId))
     );
     if (!boardFollowsSnap.empty) {
-      const batch = writeBatch(db);
-      boardFollowsSnap.docs.forEach((d) => {
-        batch.delete(d.ref);
-        batch.update(doc(db, "boards", d.data().boardId), { followerCount: increment(-1) });
-      });
-      await batch.commit();
+      await batchDeleteWithDecrement(boardFollowsSnap.docs, "boards", "boardId", "followerCount");
     }
 
     // Delete user follow relationships (both directions) and update counts
@@ -131,24 +132,14 @@ export async function deleteUserAccount(userId: string) {
       query(collection(db, "userFollows"), where("followerId", "==", userId))
     );
     if (!followingSnap.empty) {
-      const batch = writeBatch(db);
-      followingSnap.docs.forEach((d) => {
-        batch.delete(d.ref);
-        batch.update(doc(db, "users", d.data().followingId), { followerCount: increment(-1) });
-      });
-      await batch.commit();
+      await batchDeleteWithDecrement(followingSnap.docs, "users", "followingId", "followerCount");
     }
 
     const followersSnap = await getDocs(
       query(collection(db, "userFollows"), where("followingId", "==", userId))
     );
     if (!followersSnap.empty) {
-      const batch = writeBatch(db);
-      followersSnap.docs.forEach((d) => {
-        batch.delete(d.ref);
-        batch.update(doc(db, "users", d.data().followerId), { followingCount: increment(-1) });
-      });
-      await batch.commit();
+      await batchDeleteWithDecrement(followersSnap.docs, "users", "followerId", "followingCount");
     }
 
     // Delete the user profile document
@@ -156,6 +147,17 @@ export async function deleteUserAccount(userId: string) {
   } catch (error) {
     console.error("deleteUserAccount failed:", error);
     throw error;
+  }
+}
+
+export async function getUserPostCount(userId: string): Promise<number> {
+  try {
+    const q = query(collection(db, "posts"), where("authorId", "==", userId));
+    const snap = await getCountFromServer(q);
+    return snap.data().count;
+  } catch (error) {
+    console.error("getUserPostCount failed:", error);
+    return 0;
   }
 }
 
@@ -342,6 +344,14 @@ export async function deletePost(postId: string) {
         batch.update(tagRef, { postCount: increment(-1) });
       }
       await batch.commit();
+    }
+
+    // Delete media from storage
+    if (postData?.mediaURL) {
+      await deleteMedia(postData.mediaURL);
+    }
+    if (postData?.thumbnailURL && postData.thumbnailURL !== postData.mediaURL) {
+      await deleteMedia(postData.thumbnailURL);
     }
 
     // Delete the post itself
@@ -878,23 +888,29 @@ export async function getTrendingTags(maxResults = 15): Promise<Tag[]> {
 
 export async function getFeedStats(): Promise<{ postCount: number; newCount: number; boardCount: number; totalLikes: number }> {
   try {
+    const [postCountSnap, boardCountSnap] = await Promise.all([
+      getCountFromServer(collection(db, "posts")),
+      getCountFromServer(query(collection(db, "boards"), where("isPublic", "==", true))),
+    ]);
+
+    // For newCount and totalLikes we still need to read documents
+    // but limit to recent posts for efficiency
+    const oneDayAgo = Timestamp.fromMillis(Date.now() - 86400000);
+    const recentSnap = await getDocs(
+      query(collection(db, "posts"), where("createdAt", ">", oneDayAgo))
+    );
+
+    // Get totalLikes from a sample — read all posts but only extract likeCount
     const postsSnap = await getDocs(collection(db, "posts"));
-    const boardsSnap = await getDocs(query(collection(db, "boards"), where("isPublic", "==", true)));
-
     let totalLikes = 0;
-    let newCount = 0;
-    const oneDayAgo = Date.now() - 86400000;
-
     postsSnap.docs.forEach((d) => {
-      const data = d.data();
-      totalLikes += data.likeCount || 0;
-      if (data.createdAt?.toMillis() > oneDayAgo) newCount++;
+      totalLikes += d.data().likeCount || 0;
     });
 
     return {
-      postCount: postsSnap.size,
-      newCount,
-      boardCount: boardsSnap.size,
+      postCount: postCountSnap.data().count,
+      newCount: recentSnap.size,
+      boardCount: boardCountSnap.data().count,
       totalLikes,
     };
   } catch (error) {

@@ -164,10 +164,24 @@ export function extractHandle(platform: SocialPlatform, url: string): string {
 
 interface ProfileSocialLinksProps {
   links: SocialLink[];
+  isOwnProfile?: boolean;
+  onEditClick?: () => void;
 }
 
-export default function ProfileSocialLinks({ links }: ProfileSocialLinksProps) {
-  if (links.length === 0) return null;
+export default function ProfileSocialLinks({ links, isOwnProfile, onEditClick }: ProfileSocialLinksProps) {
+  if (links.length === 0) {
+    if (isOwnProfile && onEditClick) {
+      return (
+        <div className={styles.container}>
+          <button className={styles.emptyState} onClick={onEditClick}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
+            הוסיפו קישורים חברתיים
+          </button>
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className={styles.container}>
@@ -181,6 +195,7 @@ export default function ProfileSocialLinks({ links }: ProfileSocialLinksProps) {
             target="_blank"
             rel="noopener noreferrer"
             className={styles.iconButton}
+            data-platform={link.platform}
             aria-label={config.label}
             title={config.label}
           >

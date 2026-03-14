@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserProfile, getUserBoards, getBoard } from "@/lib/firestore";
+import { getUserProfile, getUserBoards, getBoard, getUserPostCount } from "@/lib/firestore";
 import { UserProfile, Board } from "@/lib/types";
 import Navbar from "@/components/layout/Navbar";
 import ProfileHero from "@/components/profile/ProfileHero";
@@ -24,6 +24,7 @@ export default function ProfilePage({ params }: { params: Promise<{ userId: stri
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
   const [boards, setBoards] = useState<Board[]>([]);
   const [pinnedBoards, setPinnedBoards] = useState<Board[]>([]);
+  const [postCount, setPostCount] = useState(0);
   const [showEdit, setShowEdit] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -55,6 +56,9 @@ export default function ProfilePage({ params }: { params: Promise<{ userId: stri
       .catch((error) => {
         console.error("ProfilePage: failed to load boards:", error);
       });
+    getUserPostCount(userId)
+      .then(setPostCount)
+      .catch(console.error);
   }, [userId, user?.uid]);
 
   if (loading) return <Spinner fullPage />;
@@ -67,15 +71,23 @@ export default function ProfilePage({ params }: { params: Promise<{ userId: stri
       <main id="main-content" className={styles.main}>
         <ProfileHero
           profile={profileUser}
-          postCount={0}
+          postCount={postCount}
           boardCount={boards.length}
           isOwnProfile={isOwnProfile}
           onEditClick={() => setShowEdit(true)}
         />
 
-        <ProfileSocialLinks links={profileUser.socialLinks || []} />
+        <ProfileSocialLinks
+          links={profileUser.socialLinks || []}
+          isOwnProfile={isOwnProfile}
+          onEditClick={() => setShowEdit(true)}
+        />
 
-        <ProfileFeaturedBoards boards={pinnedBoards} />
+        <ProfileFeaturedBoards
+          boards={pinnedBoards}
+          isOwnProfile={isOwnProfile}
+          onEditClick={() => setShowEdit(true)}
+        />
 
         <div className={styles.tabsSection}>
           <ProfileTabs

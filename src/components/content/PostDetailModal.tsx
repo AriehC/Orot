@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Post } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
+import { DARK_CARD_COLORS, TYPE_CONFIG } from "@/lib/constants";
 import EditPostModal from "./EditPostModal";
 import MeditationTimer from "./MeditationTimer";
 import toast from "react-hot-toast";
@@ -18,13 +20,6 @@ interface PostDetailModalProps {
   onSave: (postId: string) => void;
   onClose: () => void;
 }
-
-const TYPE_CONFIG = {
-  note: { label: "פתק", bg: "#FFF3E8", color: "#C17B4A" },
-  quote: { label: "ציטוט", bg: "#F0E8FF", color: "#9B7ED8" },
-  image: { label: "תמונה", bg: "#E8F5ED", color: "#5DA87E" },
-  video: { label: "וידאו", bg: "#E8F0F5", color: "#6B8FA3" },
-};
 
 export default function PostDetailModal({
   post,
@@ -122,7 +117,7 @@ export default function PostDetailModal({
         role="dialog"
         aria-modal="true"
         aria-label={currentPost.title}
-        style={{ backgroundColor: currentPost.color || "#FFFFFF", "--card-color": currentPost.color || "#FFFFFF" } as React.CSSProperties}
+        style={{ backgroundColor: currentPost.color || "#FFFFFF", "--card-color": currentPost.color || "#FFFFFF", "--card-color-dark": DARK_CARD_COLORS[currentPost.color || ""] || currentPost.color || "#FFFFFF" } as React.CSSProperties}
         onClick={(e) => e.stopPropagation()}
       >
         <button className={styles.closeBtn} onClick={onClose} aria-label="סגור">
@@ -142,12 +137,16 @@ export default function PostDetailModal({
         )}
 
         {currentPost.mediaURL && !imageError && (
-          <img
-            className={styles.media}
-            src={currentPost.mediaURL}
-            alt={currentPost.title}
-            onError={() => setImageError(true)}
-          />
+          <div className={styles.mediaWrapper}>
+            <Image
+              className={styles.media}
+              src={currentPost.mediaURL}
+              alt={currentPost.title}
+              fill
+              sizes="(max-width: 600px) 100vw, 560px"
+              onError={() => setImageError(true)}
+            />
+          </div>
         )}
 
         <div className={styles.body}>
@@ -212,6 +211,7 @@ export default function PostDetailModal({
                 <svg width="16" height="16" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                 </svg>
+                {(currentPost.saveCount + (isSaved ? 1 : 0)) > 0 && <span>{formatNumber(currentPost.saveCount + (isSaved ? 1 : 0))}</span>}
               </button>
               <button className={styles.shareBtn} onClick={handleShare} title="שיתוף" aria-label="שיתוף">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

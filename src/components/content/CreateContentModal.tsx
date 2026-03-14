@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createPost, addToBoard } from "@/lib/firestore";
 import { uploadMedia } from "@/lib/storage";
 import { PostType } from "@/lib/types";
+import { CREATE_CARD_COLORS, TYPE_OPTIONS } from "@/lib/constants";
 import { isInstagramURL, parseCaption, extractHashtags } from "@/lib/instagram";
 import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
@@ -13,15 +14,6 @@ import styles from "./CreateContentModal.module.css";
 interface CreateContentModalProps {
   onClose: () => void;
 }
-
-const COLORS = ["#EFE3D4", "#D9E3EE", "#E0D4F6", "#D2EDDC", "#F4D8D8", "#EFE5CD"];
-
-const TYPE_OPTIONS: { key: PostType; label: string }[] = [
-  { key: "note", label: "פתק" },
-  { key: "quote", label: "ציטוט" },
-  { key: "image", label: "תמונה" },
-  { key: "video", label: "וידאו" },
-];
 
 export default function CreateContentModal({ onClose }: CreateContentModalProps) {
   const { user, profile } = useAuth();
@@ -32,7 +24,7 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
   const [body, setBody] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [color, setColor] = useState(COLORS[0]);
+  const [color, setColor] = useState(CREATE_CARD_COLORS[0]);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -185,7 +177,7 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
       </div>
 
       <div className={styles.formGroup}>
-        <label>סוג תוכן</label>
+        <label htmlFor="contentType">סוג תוכן</label>
         <div className={styles.typeSelector}>
           {TYPE_OPTIONS.map((t) => (
             <button
@@ -201,8 +193,9 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
       </div>
 
       <div className={styles.formGroup}>
-        <label>כותרת</label>
+        <label htmlFor="postTitle">כותרת</label>
         <input
+          id="postTitle"
           placeholder="מה ההשראה?"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -211,8 +204,9 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
       </div>
 
       <div className={styles.formGroup}>
-        <label>תוכן</label>
+        <label htmlFor="postBody">תוכן</label>
         <textarea
+          id="postBody"
           placeholder="שתפו את המחשבה, הציטוט, או התובנה שלכם..."
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -221,7 +215,7 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
       </div>
 
       <div className={styles.formGroup}>
-        <label>תגיות</label>
+        <label htmlFor="tagInput">תגיות</label>
         <div className={styles.tagsContainer} onClick={() => document.getElementById("tagInput")?.focus()}>
           {tags.map((tag) => (
             <span key={tag} className={styles.tagChip}>
@@ -273,7 +267,7 @@ export default function CreateContentModal({ onClose }: CreateContentModalProps)
       <div className={styles.formGroup}>
         <label>צבע</label>
         <div className={styles.colorPicker}>
-          {COLORS.map((c) => (
+          {CREATE_CARD_COLORS.map((c) => (
             <button
               key={c}
               type="button"

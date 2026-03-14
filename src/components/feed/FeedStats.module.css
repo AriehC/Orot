@@ -20,6 +20,25 @@
   font-size: 14px;
 }
 
+/* Skeleton loading */
+.skeleton {
+  opacity: 0.5;
+}
+
+.skeletonNumber {
+  display: inline-block;
+  width: 24px;
+  height: 14px;
+  background: var(--border);
+  border-radius: 4px;
+  animation: shimmerPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmerPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
 @media (max-width: 500px) {
   .bar {
     gap: 16px;

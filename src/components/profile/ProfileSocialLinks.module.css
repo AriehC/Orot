@@ -1,7 +1,8 @@
 .container {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 12px;
   padding: 16px 0 8px;
 }
 
@@ -19,9 +20,117 @@
   cursor: pointer;
 }
 
+:global([data-theme="dark"]) .iconButton {
+  background: var(--bg-secondary);
+}
+
 .iconButton:hover {
   transform: scale(1.1);
-  background: var(--accent-glow);
-  border-color: var(--accent-soft);
+}
+
+/* Brand-colored hover per platform */
+.iconButton[data-platform="instagram"]:hover {
+  border-color: #E1306C;
+  color: #E1306C;
+  background: rgba(225, 48, 108, 0.08);
+}
+
+.iconButton[data-platform="twitter"]:hover {
+  border-color: #1DA1F2;
+  color: #1DA1F2;
+  background: rgba(29, 161, 242, 0.08);
+}
+
+.iconButton[data-platform="youtube"]:hover {
+  border-color: #FF0000;
+  color: #FF0000;
+  background: rgba(255, 0, 0, 0.08);
+}
+
+.iconButton[data-platform="tiktok"]:hover {
+  border-color: #000000;
+  color: #000000;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+:global([data-theme="dark"]) .iconButton[data-platform="tiktok"]:hover {
+  border-color: #FFFFFF;
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.iconButton[data-platform="spotify"]:hover {
+  border-color: #1DB954;
+  color: #1DB954;
+  background: rgba(29, 185, 84, 0.08);
+}
+
+.iconButton[data-platform="telegram"]:hover {
+  border-color: #0088CC;
+  color: #0088CC;
+  background: rgba(0, 136, 204, 0.08);
+}
+
+.iconButton[data-platform="facebook"]:hover {
+  border-color: #1877F2;
+  color: #1877F2;
+  background: rgba(24, 119, 242, 0.08);
+}
+
+.iconButton[data-platform="threads"]:hover {
+  border-color: #000000;
+  color: #000000;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+:global([data-theme="dark"]) .iconButton[data-platform="threads"]:hover {
+  border-color: #FFFFFF;
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.iconButton[data-platform="linkedin"]:hover {
+  border-color: #0A66C2;
+  color: #0A66C2;
+  background: rgba(10, 102, 194, 0.08);
+}
+
+.iconButton[data-platform="whatsapp"]:hover {
+  border-color: #25D366;
+  color: #25D366;
+  background: rgba(37, 211, 102, 0.08);
+}
+
+.iconButton[data-platform="website"]:hover {
+  border-color: var(--accent);
   color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Empty state CTA */
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  margin: 8px auto;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  transition: var(--transition-fast);
+}
+
+.emptyState:hover {
+  color: var(--accent);
+  background: var(--accent-glow);
 }

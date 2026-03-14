@@ -3,6 +3,7 @@
 import { useState, KeyboardEvent } from "react";
 import { updatePost } from "@/lib/firestore";
 import { Post, PostType } from "@/lib/types";
+import { CARD_COLORS, TYPE_OPTIONS } from "@/lib/constants";
 import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 import styles from "./CreateContentModal.module.css";
@@ -13,22 +14,13 @@ interface EditPostModalProps {
   onSaved: (data: Partial<Post>) => void;
 }
 
-const COLORS = ["#FFF8F0", "#F0F4F8", "#F5F0FF", "#F0FFF5", "#FFF5F5", "#FFFBF0"];
-
-const TYPE_OPTIONS: { key: PostType; label: string }[] = [
-  { key: "note", label: "פתק" },
-  { key: "quote", label: "ציטוט" },
-  { key: "image", label: "תמונה" },
-  { key: "video", label: "וידאו" },
-];
-
 export default function EditPostModal({ post, onClose, onSaved }: EditPostModalProps) {
   const [type, setType] = useState<PostType>(post.type);
   const [title, setTitle] = useState(post.title);
   const [body, setBody] = useState(post.body);
   const [tags, setTags] = useState<string[]>(post.tags);
   const [tagInput, setTagInput] = useState("");
-  const [color, setColor] = useState(post.color || COLORS[0]);
+  const [color, setColor] = useState(post.color || CARD_COLORS[0]);
   const [submitting, setSubmitting] = useState(false);
 
   function handleTagKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -130,7 +122,7 @@ export default function EditPostModal({ post, onClose, onSaved }: EditPostModalP
       <div className={styles.formGroup}>
         <label>צבע</label>
         <div className={styles.colorPicker}>
-          {COLORS.map((c) => (
+          {CARD_COLORS.map((c) => (
             <button
               key={c}
               type="button"

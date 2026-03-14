@@ -32,6 +32,16 @@ function hoursAgo(h: number): Timestamp {
   return Timestamp.fromMillis(Date.now() - h * 3600000);
 }
 
+// Card colors that match DARK_CARD_COLORS in ContentCard.tsx
+const COLORS = {
+  warm: "#FFF8F0",   // warm amber in dark mode
+  blue: "#F0F4F8",   // blue in dark mode
+  purple: "#F5F0FF", // purple in dark mode
+  green: "#F0FFF5",  // green in dark mode
+  rose: "#FFF5F5",   // rose in dark mode
+  gold: "#FFFBF0",   // gold in dark mode
+};
+
 const SAMPLE_POSTS = [
   // ─── Quotes with images ────────────────────────────────────────────────
   {
@@ -40,7 +50,7 @@ const SAMPLE_POSTS = [
     body: "הפצע הוא המקום שבו האור נכנס אליך.",
     tags: ["רומי", "ריפוי", "אור"],
     author: "ג׳לאל א-דין רומי",
-    color: "#E0D4F6",
+    color: COLORS.purple,
     mediaURL: "https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=600&h=400&fit=crop",
     createdAt: hoursAgo(168),
   },
@@ -50,7 +60,7 @@ const SAMPLE_POSTS = [
     body: "כל העולם כולו גשר צר מאוד, והעיקר לא לפחד כלל.",
     tags: ["רבי נחמן", "אמונה", "חוכמה"],
     author: "רבי נחמן מברסלב",
-    color: "#EFE3D4",
+    color: COLORS.warm,
     mediaURL: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
     createdAt: hoursAgo(400),
   },
@@ -60,7 +70,7 @@ const SAMPLE_POSTS = [
     body: "כפי שנר אינו יכול לבעור בלי אש, כך אדם אינו יכול לחיות בלי חיים רוחניים.",
     tags: ["בודהיזם", "רוחניות", "חוכמה"],
     author: "בודהה",
-    color: "#EFE3D4",
+    color: COLORS.gold,
     mediaURL: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&h=400&fit=crop",
     createdAt: hoursAgo(280),
   },
@@ -70,7 +80,7 @@ const SAMPLE_POSTS = [
     body: "היה השינוי שאתה רוצה לראות בעולם.",
     tags: ["גנדי", "שינוי", "השראה"],
     author: "מהטמה גנדי",
-    color: "#D2EDDC",
+    color: COLORS.green,
     mediaURL: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&h=400&fit=crop",
     createdAt: hoursAgo(350),
   },
@@ -80,7 +90,7 @@ const SAMPLE_POSTS = [
     body: "מי שיש לו למה לחיות, יכול לסבול כמעט כל איך.",
     tags: ["פרנקל", "משמעות", "חוכמה"],
     author: "ויקטור פרנקל",
-    color: "#D9E3EE",
+    color: COLORS.blue,
     mediaURL: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&h=400&fit=crop",
     createdAt: hoursAgo(300),
   },
@@ -90,7 +100,7 @@ const SAMPLE_POSTS = [
     body: "היה חמלה בכל מקום שתלך. תן לאף אחד לא לעזוב אותך בלי שירגיש יותר מאושר.",
     tags: ["הדלאי לאמה", "חמלה", "אושר"],
     author: "הדלאי לאמה",
-    color: "#D2EDDC",
+    color: COLORS.green,
     mediaURL: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=400&fit=crop",
     createdAt: hoursAgo(250),
   },
@@ -100,7 +110,7 @@ const SAMPLE_POSTS = [
     body: "לכל זמן ועת לכל חפץ תחת השמים. עת ללדת ועת למות, עת לטעת ועת לעקור נטוע.",
     tags: ["קהלת", "חוכמה", "תנ״ך"],
     author: "שלמה המלך",
-    color: "#EFE5CD",
+    color: COLORS.gold,
     mediaURL: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=600&h=400&fit=crop",
     createdAt: hoursAgo(500),
   },
@@ -110,7 +120,7 @@ const SAMPLE_POSTS = [
     body: "אם אין אני לי, מי לי? וכשאני לעצמי, מה אני? ואם לא עכשיו, אימתי?",
     tags: ["הלל", "חוכמה", "יהדות"],
     author: "הלל הזקן",
-    color: "#EFE3D4",
+    color: COLORS.warm,
     mediaURL: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=600&h=400&fit=crop",
     createdAt: hoursAgo(480),
   },
@@ -120,7 +130,7 @@ const SAMPLE_POSTS = [
     body: "כל ילד שנולד מביא את הבשורה שאלוהים עדיין לא התייאש מבני האדם.",
     tags: ["טאגור", "תקווה", "השראה"],
     author: "רבינדרנאת טאגור",
-    color: "#D2EDDC",
+    color: COLORS.rose,
     mediaURL: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&h=400&fit=crop",
     createdAt: hoursAgo(320),
   },
@@ -130,7 +140,7 @@ const SAMPLE_POSTS = [
     body: "אל תהיו עצובים. כל מה שתפסידו חוזר אליכם בדרך אחרת.",
     tags: ["רומי", "תקווה", "אמונה"],
     author: "ג׳לאל א-דין רומי",
-    color: "#E0D4F6",
+    color: COLORS.purple,
     mediaURL: "https://images.unsplash.com/photo-1500534623283-312aade213eb?w=600&h=400&fit=crop",
     createdAt: hoursAgo(190),
   },
@@ -142,7 +152,7 @@ const SAMPLE_POSTS = [
     body: "אין דרך אל השלום. השלום הוא הדרך.",
     tags: ["שלום", "חוכמה", "בודהיזם"],
     author: "טיך נאט האן",
-    color: "#D2EDDC",
+    color: COLORS.green,
     createdAt: hoursAgo(240),
   },
   {
@@ -151,7 +161,7 @@ const SAMPLE_POSTS = [
     body: "מסע של אלף מיל מתחיל בצעד אחד.",
     tags: ["חוכמה", "השראה", "טאו"],
     author: "לאו דזה",
-    color: "#EFE3D4",
+    color: COLORS.warm,
     createdAt: hoursAgo(336),
   },
   {
@@ -160,7 +170,7 @@ const SAMPLE_POSTS = [
     body: "הישן יתחדש והחדש יתקדש.",
     tags: ["הרב קוק", "חוכמה", "חידוש"],
     author: "הרב אברהם יצחק הכהן קוק",
-    color: "#D2EDDC",
+    color: COLORS.gold,
     createdAt: hoursAgo(450),
   },
   {
@@ -169,7 +179,7 @@ const SAMPLE_POSTS = [
     body: "כשאתה רוצה משהו, כל היקום קושר קשר כדי לעזור לך להגשים את זה.",
     tags: ["השראה", "חלומות", "יקום"],
     author: "פאולו קואלו",
-    color: "#EFE5CD",
+    color: COLORS.purple,
     createdAt: hoursAgo(200),
   },
   {
@@ -178,7 +188,7 @@ const SAMPLE_POSTS = [
     body: "האושר בחייך תלוי באיכות מחשבותיך.",
     tags: ["סטואיות", "חוכמה", "מחשבות"],
     author: "מרקוס אורליוס",
-    color: "#D9E3EE",
+    color: COLORS.blue,
     createdAt: hoursAgo(380),
   },
   {
@@ -187,7 +197,7 @@ const SAMPLE_POSTS = [
     body: "מה שאתם חושבים שאתם צריכים כדי להיות מאושרים — זה מה שמונע מכם להיות מאושרים עכשיו.",
     tags: ["נוכחות", "אושר", "חוכמה"],
     author: "אקהרט טולה",
-    color: "#E0D4F6",
+    color: COLORS.purple,
     createdAt: hoursAgo(220),
   },
   {
@@ -196,7 +206,7 @@ const SAMPLE_POSTS = [
     body: "אין דבר שלם יותר מלב שבור.",
     tags: ["חסידות", "חוכמה", "ריפוי"],
     author: "רבי מנחם מנדל מקוצק",
-    color: "#F4D8D8",
+    color: COLORS.rose,
     createdAt: hoursAgo(420),
   },
   {
@@ -205,7 +215,7 @@ const SAMPLE_POSTS = [
     body: "לא כי הדברים קשים אנחנו לא מעזים, אלא כי אנחנו לא מעזים — הם קשים.",
     tags: ["סטואיות", "אומץ", "חוכמה"],
     author: "סנקא",
-    color: "#D9E3EE",
+    color: COLORS.blue,
     createdAt: hoursAgo(360),
   },
   {
@@ -214,7 +224,7 @@ const SAMPLE_POSTS = [
     body: "אם אתה חושב שאתה קטן מכדי לשנות משהו, נסה לישון עם יתוש בחדר.",
     tags: ["הדלאי לאמה", "שינוי", "הומור"],
     author: "הדלאי לאמה",
-    color: "#EFE5CD",
+    color: COLORS.gold,
     createdAt: hoursAgo(180),
   },
   {
@@ -223,7 +233,7 @@ const SAMPLE_POSTS = [
     body: "מעבר לרעיונות של צדק ועוול, יש שדה. אפגוש אותך שם.",
     tags: ["רומי", "אהבה", "אחדות"],
     author: "ג׳לאל א-דין רומי",
-    color: "#E0D4F6",
+    color: COLORS.warm,
     createdAt: hoursAgo(260),
   },
   {
@@ -232,7 +242,7 @@ const SAMPLE_POSTS = [
     body: "המים הרכים ביותר מנצחים את הסלע הקשה ביותר. מה שאין לו צורה חודר למה שאין לו פתח.",
     tags: ["טאו", "חוכמה", "טבע"],
     author: "לאו דזה",
-    color: "#D2EDDC",
+    color: COLORS.green,
     createdAt: hoursAgo(310),
   },
   {
@@ -241,7 +251,7 @@ const SAMPLE_POSTS = [
     body: "שומר פיו ולשונו — שומר מצרות נפשו.",
     tags: ["משלי", "חוכמה", "תנ״ך"],
     author: "שלמה המלך",
-    color: "#EFE3D4",
+    color: COLORS.gold,
     createdAt: hoursAgo(440),
   },
 
@@ -252,7 +262,7 @@ const SAMPLE_POSTS = [
     body: "שאפו 4 שניות, החזיקו 7 שניות, נשפו 8 שניות. חזרו 4 פעמים. טכניקה פשוטה להפעלת מערכת העצבים הפרסימפתטית.",
     tags: ["מדיטציה", "נשימה", "טכניקה"],
     author: "ד״ר אנדרו וייל",
-    color: "#D9E3EE",
+    color: COLORS.blue,
     createdAt: hoursAgo(144),
   },
   {
@@ -261,7 +271,7 @@ const SAMPLE_POSTS = [
     body: "שבו בנוחות, עצמו עיניים. חזרו בלב:\n\nשאהיה בשלום.\nשאהיה מאושר.\nשאהיה בריא.\nשאחיה בנקל.\n\nהרחיבו את האיחול לאדם אהוב, לאדם ניטרלי, לאדם קשה, ולבסוף — לכל היצורים.",
     tags: ["מדיטציה", "מטא", "חמלה", "תרגול"],
     author: "טיך נאט האן",
-    color: "#D2EDDC",
+    color: COLORS.rose,
     createdAt: hoursAgo(96),
   },
   {
@@ -270,7 +280,7 @@ const SAMPLE_POSTS = [
     body: "לפני השינה, כתבו שלושה דברים שאתם אסירי תודה עליהם מהיום. לא חייבים להיות דברים גדולים — קפה טוב, חיוך של זר, רגע של שקט. התרגיל הזה מחווט מחדש את המוח לשים לב לטוב.",
     tags: ["הכרת תודה", "תרגול", "מיינדפולנס"],
     author: "ד״ר רוברט אמונס",
-    color: "#EFE5CD",
+    color: COLORS.warm,
     createdAt: hoursAgo(72),
   },
   {
@@ -279,7 +289,7 @@ const SAMPLE_POSTS = [
     body: "שכבו על הגב. התחילו מכפות הרגליים ועלו לאט כלפי מעלה. בכל אזור, שימו לב לתחושות בלי לשפוט — חום, קור, לחץ, קלילות. אם המחשבות נודדות, חזרו בעדינות לגוף. הגיעו עד קודקוד הראש.",
     tags: ["מדיטציה", "סריקת גוף", "תרגול", "מיינדפולנס"],
     author: "ג׳ון קבט-זין",
-    color: "#D9E3EE",
+    color: COLORS.green,
     createdAt: hoursAgo(48),
   },
 
@@ -290,7 +300,7 @@ const SAMPLE_POSTS = [
     body: "תן לי אור, ואני אמצא את דרכי בעצמי.",
     tags: ["חסידות", "אור", "אמונה"],
     author: "רבי ישראל בעל שם טוב",
-    color: "#EFE3D4",
+    color: COLORS.gold,
     mediaURL: "https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=600&h=400&fit=crop",
     createdAt: hoursAgo(520),
   },
@@ -300,7 +310,7 @@ const SAMPLE_POSTS = [
     body: "שיר למעלות. אשא עיני אל ההרים — מאין יבוא עזרי. עזרי מעם ה׳, עושה שמים וארץ.",
     tags: ["תהילים", "תנ״ך", "אמונה", "תפילה"],
     author: "דוד המלך",
-    color: "#D9E3EE",
+    color: COLORS.blue,
     mediaURL: "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=600&h=400&fit=crop",
     createdAt: hoursAgo(540),
   },
@@ -310,7 +320,7 @@ const SAMPLE_POSTS = [
     body: "האדם הגדול ביותר הוא זה שיכול להיות הקטן ביותר. מי שיודע לרדת — יודע לעלות.",
     tags: ["הרב קוק", "ענווה", "תשובה"],
     author: "הרב אברהם יצחק הכהן קוק",
-    color: "#E0D4F6",
+    color: COLORS.purple,
     mediaURL: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=600&h=400&fit=crop",
     createdAt: hoursAgo(460),
   },
@@ -320,7 +330,7 @@ const SAMPLE_POSTS = [
     body: "אנחנו כולנו רק הולכים זה את זה הביתה.",
     tags: ["ראם דאס", "קשר", "דרך"],
     author: "ראם דאס",
-    color: "#D2EDDC",
+    color: COLORS.green,
     mediaURL: "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?w=600&h=400&fit=crop",
     createdAt: hoursAgo(160),
   },
@@ -330,7 +340,7 @@ const SAMPLE_POSTS = [
     body: "בשעה שברא הקב״ה את העולם, רצה לגלות את עומק המחשבה, חקק אורות מתוך חושך עליון, וחושך מתוך אור סתום.",
     tags: ["זוהר", "קבלה", "בריאה", "אור"],
     author: "ספר הזוהר",
-    color: "#E0D4F6",
+    color: COLORS.purple,
     mediaURL: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=600&h=400&fit=crop",
     createdAt: hoursAgo(600),
   },
@@ -340,7 +350,7 @@ const SAMPLE_POSTS = [
     body: "נוצרת אותנו לעצמך, ואין מנוחה ללבנו עד שינוח בך.",
     tags: ["נצרות", "תפילה", "נשמה"],
     author: "אוגוסטינוס",
-    color: "#F4D8D8",
+    color: COLORS.rose,
     mediaURL: "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=600&h=400&fit=crop",
     createdAt: hoursAgo(550),
   },
@@ -350,7 +360,7 @@ const SAMPLE_POSTS = [
     body: "לנשמה אין לידה ואין מוות. היא לא חדלה מלהתקיים. היא לא נולדת, לא מתה, לא הייתה ולא תחדל. היא נצחית, קדומה, תמידית.",
     tags: ["הינדואיזם", "נשמה", "נצח", "גיטא"],
     author: "בהגוואד גיטא",
-    color: "#EFE5CD",
+    color: COLORS.gold,
     mediaURL: "https://images.unsplash.com/photo-1528715471579-d1bcf0ba5e83?w=600&h=400&fit=crop",
     createdAt: hoursAgo(580),
   },
@@ -360,7 +370,7 @@ const SAMPLE_POSTS = [
     body: "אם הדבר היחיד שתגיד בתפילה שלך הוא ׳תודה׳ — זה יספיק.",
     tags: ["מיסטיקה", "תפילה", "הכרת תודה"],
     author: "מייסטר אקהרט",
-    color: "#EFE3D4",
+    color: COLORS.warm,
     mediaURL: "https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=600&h=400&fit=crop",
     createdAt: hoursAgo(410),
   },
@@ -372,7 +382,7 @@ const SAMPLE_POSTS = [
     body: "דע, שהאדם צריך לעבור על גשר צר מאוד — והכלל והעיקר שלא יתפחד כלל. כי הפחד עצמו הוא הגשר הצר.",
     tags: ["רבי נחמן", "פחד", "אמונה", "חסידות"],
     author: "רבי נחמן מברסלב",
-    color: "#EFE3D4",
+    color: COLORS.warm,
     createdAt: hoursAgo(130),
   },
   {
@@ -381,7 +391,7 @@ const SAMPLE_POSTS = [
     body: "כל אדם הוא אי שלם. כל בני האדם הם ארכיפלג. כל אדם שואף להתחבר לאיים האחרים, ולעולם אינו מצליח עד הסוף.",
     tags: ["קשר", "בדידות", "אנושיות"],
     author: "עמוס עוז",
-    color: "#D9E3EE",
+    color: COLORS.blue,
     createdAt: hoursAgo(110),
   },
   {
@@ -390,7 +400,7 @@ const SAMPLE_POSTS = [
     body: "אל תסתכל על הכלי — הסתכל מה יש בתוכו. בכל אדם יש ניצוץ אלוקי, ולפעמים הוא מוסתר מתחת לשכבות. התפקיד שלך — לגלות אותו.",
     tags: ["חב״ד", "ניצוץ", "אהבת ישראל"],
     author: "הרבי מלובביץ׳",
-    color: "#E0D4F6",
+    color: COLORS.purple,
     createdAt: hoursAgo(390),
   },
   {
@@ -399,7 +409,7 @@ const SAMPLE_POSTS = [
     body: "הוא היה אומר: אל תסתכל בקנקן אלא במה שיש בו. יש קנקן חדש מלא ישן, וישן שאפילו חדש אין בו.",
     tags: ["פרקי אבות", "חוכמה", "משנה"],
     author: "רבי מאיר",
-    color: "#EFE3D4",
+    color: COLORS.gold,
     createdAt: hoursAgo(470),
   },
   {
@@ -408,7 +418,7 @@ const SAMPLE_POSTS = [
     body: "התקווה היא לא הסכמה שהדברים יסתדרו. התקווה היא ההכרה שלמשהו יש משמעות, לא משנה איך זה ייגמר.",
     tags: ["תקווה", "משמעות", "השראה"],
     author: "ואצלב האוול",
-    color: "#D2EDDC",
+    color: COLORS.green,
     createdAt: hoursAgo(270),
   },
   {
@@ -417,7 +427,7 @@ const SAMPLE_POSTS = [
     body: "הרגע הזה — בדיוק כמו שהוא — מושלם. לא בגלל שהוא נעים או נוח, אלא בגלל שהוא אמיתי.",
     tags: ["מיינדפולנס", "נוכחות", "קבלה"],
     author: "טארא בראך",
-    color: "#E0D4F6",
+    color: COLORS.rose,
     createdAt: hoursAgo(100),
   },
   {
@@ -426,7 +436,7 @@ const SAMPLE_POSTS = [
     body: "כל האושר שיש בעולם בא מהרצון שאחרים יהיו מאושרים. כל הסבל שיש בעולם בא מהרצון שאני אהיה מאושר.",
     tags: ["בודהיזם", "חמלה", "אושר", "אלטרואיזם"],
     author: "שאנטידוה",
-    color: "#D2EDDC",
+    color: COLORS.green,
     createdAt: hoursAgo(340),
   },
   {
@@ -435,7 +445,7 @@ const SAMPLE_POSTS = [
     body: "הנה אל ישועתי, אבטח ולא אפחד. כי עוזי וזמרת יה ה׳, ויהי לי לישועה.",
     tags: ["ישעיהו", "תנ״ך", "אמונה", "גבורה"],
     author: "ישעיהו הנביא",
-    color: "#EFE5CD",
+    color: COLORS.gold,
     createdAt: hoursAgo(510),
   },
   {
@@ -444,7 +454,7 @@ const SAMPLE_POSTS = [
     body: "אין מידה של בריאות בלהיות מותאם היטב לחברה חולה עמוקות.",
     tags: ["מודעות", "חברה", "חוכמה"],
     author: "ג׳ידו קרישנמורטי",
-    color: "#D9E3EE",
+    color: COLORS.blue,
     createdAt: hoursAgo(290),
   },
   {
@@ -453,7 +463,7 @@ const SAMPLE_POSTS = [
     body: "בליבו של המתחיל יש אפשרויות רבות. בליבו של המומחה — מעטות.",
     tags: ["זן", "מתחילים", "פתיחות"],
     author: "שונריו סוזוקי",
-    color: "#D2EDDC",
+    color: COLORS.warm,
     createdAt: hoursAgo(230),
   },
   {
@@ -462,7 +472,7 @@ const SAMPLE_POSTS = [
     body: "גם אחרי כל הזמן הזה, השמש מעולם לא אמרה לארץ: ׳את חייבת לי.׳ תראו מה אהבה כזו עושה — היא מאירה את כל השמים.",
     tags: ["חאפיז", "אהבה", "סופיות", "אור"],
     author: "חאפיז",
-    color: "#EFE5CD",
+    color: COLORS.rose,
     createdAt: hoursAgo(370),
   },
 ];
@@ -499,7 +509,7 @@ async function seed() {
     isPublic: true,
     likeCount: 0,
     followerCount: 0,
-    postCount: 0,
+    itemCount: 0,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   });
@@ -563,7 +573,7 @@ async function seed() {
     });
   }
   // Update board post count
-  await mainBoardRef.update({ postCount: postIds.length });
+  await mainBoardRef.update({ itemCount: postIds.length });
   console.log(`✅ Added ${postIds.length} posts to main board`);
 
   // Create tags

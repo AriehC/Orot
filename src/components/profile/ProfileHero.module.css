@@ -8,11 +8,31 @@
 /* Cover */
 .cover {
   width: 100%;
-  height: 220px;
+  height: 260px;
   position: relative;
   background: var(--avatar-gradient);
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   overflow: hidden;
+  animation: fadeIn 0.5s ease both;
+}
+
+.coverDefault {
+  background:
+    radial-gradient(circle at 30% 40%, rgba(193, 123, 74, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 60%, rgba(155, 126, 216, 0.12) 0%, transparent 50%),
+    var(--avatar-gradient);
+}
+
+.coverDefault::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image:
+    radial-gradient(circle at 20% 30%, currentColor 1px, transparent 1px),
+    radial-gradient(circle at 80% 70%, currentColor 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, currentColor 1px, transparent 1px);
+  background-size: 40px 40px, 60px 60px, 80px 80px;
 }
 
 .coverImage {
@@ -31,11 +51,20 @@
   );
 }
 
+:global([data-theme="dark"]) .coverOverlay {
+  background: linear-gradient(
+    to bottom,
+    transparent 30%,
+    var(--bg) 100%
+  );
+}
+
 /* Avatar */
 .avatarWrapper {
   margin-top: -50px;
   position: relative;
   z-index: 2;
+  animation: fadeUp 0.5s ease 0.1s both;
 }
 
 .avatar {
@@ -54,6 +83,18 @@
   box-shadow:
     0 0 0 4px var(--card-bg),
     0 0 0 7px var(--accent-soft);
+  animation: pulseGlow 4s ease-in-out infinite;
+  transition: transform 0.3s ease;
+}
+
+:global([data-theme="dark"]) .avatar {
+  box-shadow:
+    0 0 0 4px var(--bg),
+    0 0 0 7px rgba(212, 160, 74, 0.3);
+}
+
+.avatarOwn:hover {
+  transform: scale(1.05);
 }
 
 .avatar img {
@@ -68,12 +109,18 @@
   padding: 16px 24px 0;
   max-width: 600px;
   width: 100%;
+  animation: fadeUp 0.5s ease 0.2s both;
 }
 
 .name {
-  font-size: 28px;
+  font-size: 32px;
   font-family: var(--font-heading);
   margin-bottom: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:global([data-theme="dark"]) .name {
+  text-shadow: 0 0 20px rgba(212, 160, 74, 0.15);
 }
 
 .tagline {
@@ -81,6 +128,7 @@
   color: var(--text-secondary);
   font-style: italic;
   margin-bottom: 8px;
+  letter-spacing: 0.3px;
 }
 
 .bio {
@@ -88,6 +136,30 @@
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 16px;
+  max-width: 500px;
+  margin-inline: auto;
+}
+
+/* Placeholder buttons for empty state */
+.placeholderBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-xs);
+  transition: var(--transition-fast);
+}
+
+.placeholderBtn:hover {
+  color: var(--accent);
+  background: var(--accent-glow);
 }
 
 /* Stats */
@@ -97,6 +169,7 @@
   justify-content: center;
   gap: 16px;
   margin-bottom: 20px;
+  animation: fadeUp 0.5s ease 0.3s both;
 }
 
 .statItem {
@@ -109,7 +182,10 @@
 .statNumber {
   font-family: var(--font-heading);
   font-size: 20px;
-  color: var(--accent);
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .statLabel {
@@ -128,6 +204,7 @@
   display: flex;
   gap: 10px;
   justify-content: center;
+  animation: fadeUp 0.5s ease 0.4s both;
 }
 
 .editBtn {
@@ -187,7 +264,7 @@
 /* Mobile */
 @media (max-width: 600px) {
   .cover {
-    height: 160px;
+    height: 180px;
   }
 
   .avatarWrapper {
@@ -201,7 +278,7 @@
   }
 
   .name {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .stats {

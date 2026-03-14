@@ -136,7 +136,7 @@ export default function ProfileTabs({ userId, boards, mainBoardId, isOwnProfile 
       </div>
 
       {activeTab === "myboard" && (
-        <div role="tabpanel" id="tabpanel-myboard" aria-labelledby="tab-myboard">
+        <div role="tabpanel" id="tabpanel-myboard" aria-labelledby="tab-myboard" className={styles.tabContent}>
           <MasonryFeed
             posts={boardPosts}
             loading={boardLoading}
@@ -150,7 +150,7 @@ export default function ProfileTabs({ userId, boards, mainBoardId, isOwnProfile 
       )}
 
       {activeTab === "content" && isOwnProfile && (
-        <div role="tabpanel" id="tabpanel-content" aria-labelledby="tab-content">
+        <div role="tabpanel" id="tabpanel-content" aria-labelledby="tab-content" className={styles.tabContent}>
           <MasonryFeed
             posts={userPosts}
             loading={postsLoading}
@@ -163,7 +163,7 @@ export default function ProfileTabs({ userId, boards, mainBoardId, isOwnProfile 
       )}
 
       {activeTab === "saved" && isOwnProfile && (
-        <div role="tabpanel" id="tabpanel-saved" aria-labelledby="tab-saved">
+        <div role="tabpanel" id="tabpanel-saved" aria-labelledby="tab-saved" className={styles.tabContent}>
           <MasonryFeed
             posts={savedPosts}
             loading={savedLoading}
@@ -180,7 +180,7 @@ export default function ProfileTabs({ userId, boards, mainBoardId, isOwnProfile 
           role="tabpanel"
           id="tabpanel-boards"
           aria-labelledby="tab-boards"
-          className={styles.boardsContainer}
+          className={`${styles.boardsContainer} ${styles.tabContent}`}
         >
           {visibleBoards.length === 0 ? (
             <EmptyState text="עדיין אין לוחות נוספים" />
@@ -191,7 +191,7 @@ export default function ProfileTabs({ userId, boards, mainBoardId, isOwnProfile 
                   key={board.id}
                   href={`/boards/${board.id}`}
                   className={styles.boardCard}
-                  style={{ backgroundColor: board.color + "15" }}
+                  style={{ backgroundColor: `color-mix(in srgb, ${board.color} 8%, transparent)` }}
                 >
                   <h3 style={{ color: board.color }}>{board.name}</h3>
                   <p>{board.description}</p>
