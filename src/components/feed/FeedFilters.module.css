@@ -42,3 +42,51 @@
   gap: 5px;
   font-weight: 600;
 }
+
+.modeChip {
+  composes: chip;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modeChipActive {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.modeChipActive:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.typeChip {
+  composes: chip;
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+.typeChipActive {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.typeChipActive:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.separator {
+  width: 1px;
+  min-width: 1px;
+  align-self: stretch;
+  background: var(--border);
+  margin: 4px 2px;
+}

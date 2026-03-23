@@ -281,6 +281,17 @@
   background: var(--like-soft);
 }
 
+/* Comment count */
+.commentCount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px;
+}
+
 /* Badge row */
 .badgeRow {
   display: flex;

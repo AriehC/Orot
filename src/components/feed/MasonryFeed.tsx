@@ -17,6 +17,7 @@ interface MasonryFeedProps {
   onRemoveFromBoard?: (postId: string) => void;
   onShowBoards?: (postId: string) => void;
   onPostClick?: (post: Post) => void;
+  onShare?: (post: Post) => void;
 }
 
 const SKELETON_HEIGHTS = [140, 180, 160, 200, 150, 190, 170, 210];
@@ -52,6 +53,7 @@ export default function MasonryFeed({
   onRemoveFromBoard,
   onShowBoards,
   onPostClick,
+  onShare,
 }: MasonryFeedProps) {
   if (loading) {
     return (
@@ -100,6 +102,7 @@ export default function MasonryFeed({
             onRemoveFromBoard={onRemoveFromBoard}
             onShowBoards={onShowBoards}
             onClick={onPostClick}
+            onShare={onShare}
           />
         ))}
       </Masonry>

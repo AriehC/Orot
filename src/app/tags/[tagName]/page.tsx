@@ -1,51 +1,70 @@
-"use client";
+import type { Metadata } from "next";
+import { getTagPostsAdmin } from "@/lib/firestore-admin";
+import TagClient from "./TagClient";
 
-import { use } from "react";
-import Link from "next/link";
-import Navbar from "@/components/layout/Navbar";
-import MasonryFeed from "@/components/feed/MasonryFeed";
-import { useFeed } from "@/hooks/useFeed";
-import { useLike } from "@/hooks/useLike";
-import { useSave } from "@/hooks/useSave";
-import { useAuth } from "@/contexts/AuthContext";
-import toast from "react-hot-toast";
-import styles from "./TagPage.module.css";
+interface TagPageProps {
+  params: Promise<{ tagName: string }>;
+}
 
-export default function TagPage({ params }: { params: Promise<{ tagName: string }> }) {
-  const { tagName } = use(params);
+export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
+  const { tagName } = await params;
   const tag = decodeURIComponent(tagName);
-  const { user } = useAuth();
+  const posts = await getTagPostsAdmin(tag);
 
-  const { posts, loading } = useFeed({ tag });
-  const { isLiked, handleLike } = useLike();
-  const { isSaved, handleSave } = useSave();
+  const title = `#${tag}`;
+  const description = posts.length > 0
+    ? `${posts.length} פוסטים בנושא ${tag} — השראה רוחנית באורות`
+    : `פוסטים בנושא ${tag} — השראה רוחנית באורות`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `#${tag} | אורות`,
+      description,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: `#${tag} | אורות`,
+      description,
+    },
+  };
+}
+
+export default async function TagPage({ params }: TagPageProps) {
+  const { tagName } = await params;
+  const tag = decodeURIComponent(tagName);
+
+  // Fetch initial data server-side for SSR
+  const initialPosts = await getTagPostsAdmin(tag);
+
+  // JSON-LD structured data
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `#${tag} — אורות`,
+    description: `${initialPosts.length} פוסטים בנושא ${tag} — השראה רוחנית`,
+    url: `https://orotoo.web.app/tags/${encodeURIComponent(tag)}`,
+    numberOfItems: initialPosts.length,
+    isPartOf: {
+      "@type": "WebSite",
+      name: "אורות",
+      url: "https://orotoo.web.app",
+    },
+  };
 
   return (
     <>
-      <Navbar searchQuery="" onSearchChange={() => {}} onCreateClick={() => {}} />
-
-      <main id="main-content">
-        <div className={styles.header}>
-          <Link href="/" className={styles.back}>
-            ← חזרה
-          </Link>
-          <div className={styles.tagInfo}>
-            <h1 className={styles.tagTitle}>#{tag}</h1>
-            <p className={styles.tagCount}>
-              {!loading && `${posts.length} פוסטים`}
-            </p>
-          </div>
-        </div>
-
-        <MasonryFeed
-          posts={posts}
-          loading={loading}
-          isLiked={isLiked}
-          isSaved={isSaved}
-          onLike={(id) => user ? handleLike(id) : toast("יש להתחבר")}
-          onSave={(id) => user ? handleSave(id) : toast("יש להתחבר")}
-        />
-      </main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <TagClient
+        tagName={tag}
+        initialPosts={initialPosts}
+        initialPostCount={initialPosts.length}
+      />
     </>
   );
 }

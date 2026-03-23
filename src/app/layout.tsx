@@ -19,6 +19,7 @@ const notoSansHebrew = Noto_Sans_Hebrew({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#C17B4A",
 };
 
 export const metadata: Metadata = {
@@ -52,6 +53,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl" className={`${secularOne.variable} ${notoSansHebrew.variable}`}>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon.svg" />
+      </head>
       <body>
         <a href="#main-content" className="skipToContent">דלג לתוכן</a>
         <div className="bgPattern" aria-hidden="true" />

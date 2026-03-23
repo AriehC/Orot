@@ -7,8 +7,9 @@ import { Post } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import { DARK_CARD_COLORS, TYPE_CONFIG } from "@/lib/constants";
 import EditPostModal from "./EditPostModal";
+import ShareModal from "./ShareModal";
 import MeditationTimer from "./MeditationTimer";
-import toast from "react-hot-toast";
+import CommentsSection from "./CommentsSection";
 import styles from "./PostDetailModal.module.css";
 
 interface PostDetailModalProps {
@@ -31,6 +32,7 @@ export default function PostDetailModal({
   onClose,
 }: PostDetailModalProps) {
   const [showEdit, setShowEdit] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [currentPost, setCurrentPost] = useState(post);
   const [imageError, setImageError] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -82,18 +84,8 @@ export default function PostDetailModal({
     };
   }, [onClose]);
 
-  async function handleShare() {
-    const text = `${currentPost.title}\n\n${currentPost.body}\n\n— ${currentPost.authorName}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: currentPost.title, text });
-      } catch {
-        // User cancelled
-      }
-    } else {
-      await navigator.clipboard.writeText(text);
-      toast("הטקסט הועתק");
-    }
+  if (showShare) {
+    return <ShareModal post={currentPost} onClose={() => setShowShare(false)} />;
   }
 
   if (showEdit) {
@@ -183,7 +175,11 @@ export default function PostDetailModal({
           )}
 
           {isMeditation && <MeditationTimer />}
+        </div>
 
+        <CommentsSection postId={currentPost.id} />
+
+        <div className={styles.body} style={{ paddingTop: 0 }}>
           <div className={styles.footer}>
             <Link
               href={`/profile/${currentPost.authorId}`}
@@ -213,7 +209,7 @@ export default function PostDetailModal({
                 </svg>
                 {(currentPost.saveCount + (isSaved ? 1 : 0)) > 0 && <span>{formatNumber(currentPost.saveCount + (isSaved ? 1 : 0))}</span>}
               </button>
-              <button className={styles.shareBtn} onClick={handleShare} title="שיתוף" aria-label="שיתוף">
+              <button className={styles.shareBtn} onClick={() => setShowShare(true)} title="שיתוף" aria-label="שיתוף">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
                   <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />

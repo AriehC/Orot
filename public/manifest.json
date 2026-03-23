@@ -1,0 +1,24 @@
+{
+  "name": "אורות — השראה רוחנית",
+  "short_name": "אורות",
+  "description": "פלטפורמת השראה רוחנית — ציטוטים, הגיגים, ומדיטציה",
+  "start_url": "/",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "he",
+  "theme_color": "#C17B4A",
+  "background_color": "#FAF6F1",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

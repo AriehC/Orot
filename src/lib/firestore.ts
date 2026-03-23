@@ -23,7 +23,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { deleteMedia } from "./storage";
-import { UserProfile, Post, Board, BoardItem, Tag } from "./types";
+import { UserProfile, Post, PostType, Board, BoardItem, Tag, Comment, Notification } from "./types";
 
 // ─── Users ────────────────────────────────────────────────────────────────
 
@@ -165,13 +165,16 @@ export async function getUserPostCount(userId: string): Promise<number> {
 
 export function subscribeToPosts(
   callback: (posts: Post[]) => void,
-  options?: { tag?: string; authorId?: string; limitCount?: number },
+  options?: { tag?: string; authorId?: string; type?: PostType; limitCount?: number },
   onError?: (error: FirestoreError) => void
 ) {
   const constraints: QueryConstraint[] = [];
 
   if (options?.authorId) {
     constraints.push(where("authorId", "==", options.authorId));
+  }
+  if (options?.type) {
+    constraints.push(where("type", "==", options.type));
   }
   if (options?.tag) {
     constraints.push(where("tags", "array-contains", options.tag));
@@ -191,6 +194,7 @@ export function subscribeToPosts(
       const posts = snapshot.docs.map((d) => ({
         id: d.id,
         boardCount: 0,
+        commentCount: 0,
         ...d.data(),
       }) as Post);
       callback(posts);
@@ -229,6 +233,7 @@ export async function getPostsPaginated(
     const posts = snapshot.docs.map((d) => ({
       id: d.id,
       boardCount: 0,
+      commentCount: 0,
       ...d.data(),
     }) as Post);
     const last = snapshot.docs[snapshot.docs.length - 1] || null;
@@ -244,20 +249,21 @@ export async function getPost(postId: string): Promise<Post | null> {
   try {
     const snap = await getDoc(doc(db, "posts", postId));
     if (!snap.exists()) return null;
-    return { id: snap.id, boardCount: 0, ...snap.data() } as Post;
+    return { id: snap.id, boardCount: 0, commentCount: 0, ...snap.data() } as Post;
   } catch (error) {
     console.error("getPost failed:", error);
     throw error;
   }
 }
 
-export async function createPost(data: Omit<Post, "id" | "createdAt" | "updatedAt" | "likeCount" | "saveCount" | "boardCount">) {
+export async function createPost(data: Omit<Post, "id" | "createdAt" | "updatedAt" | "likeCount" | "saveCount" | "boardCount" | "commentCount">) {
   try {
     const postData = {
       ...data,
       likeCount: 0,
       saveCount: 0,
       boardCount: 0,
+      commentCount: 0,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     };
@@ -336,6 +342,16 @@ export async function deletePost(postId: string) {
       await batch.commit();
     }
 
+    // Delete all comments for this post
+    const commentsSnap = await getDocs(
+      query(collection(db, "comments"), where("postId", "==", postId))
+    );
+    if (!commentsSnap.empty) {
+      const batch = writeBatch(db);
+      commentsSnap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+
     // Decrement tag counts
     if (postData && postData.tags?.length > 0) {
       const batch = writeBatch(db);
@@ -380,6 +396,28 @@ export async function toggleLike(postId: string, userId: string): Promise<boolea
         createdAt: Timestamp.now(),
       });
       await updateDoc(doc(db, "posts", postId), { likeCount: increment(1) });
+
+      // Create notification for post author (non-blocking)
+      try {
+        const post = await getPost(postId);
+        if (post) {
+          const actor = await getUserProfile(userId);
+          createNotification({
+            recipientId: post.authorId,
+            type: "like",
+            actorId: userId,
+            actorName: actor?.displayName || "משתמש",
+            actorPhotoURL: actor?.photoURL || null,
+            postId,
+            postTitle: post.title,
+            boardId: null,
+            boardName: null,
+          });
+        }
+      } catch (notifError) {
+        console.error("toggleLike notification failed:", notifError);
+      }
+
       return true;
     } else {
       await deleteDoc(snap.docs[0].ref);
@@ -606,6 +644,30 @@ export async function addToBoard(boardId: string, postId: string, userId: string
     batch.update(doc(db, "boards", boardId), { itemCount: increment(1), updatedAt: Timestamp.now() });
     batch.update(doc(db, "posts", postId), { boardCount: increment(1) });
     await batch.commit();
+
+    // Create notification for post author (non-blocking)
+    try {
+      const [post, board, actor] = await Promise.all([
+        getPost(postId),
+        getBoard(boardId),
+        getUserProfile(userId),
+      ]);
+      if (post && board) {
+        createNotification({
+          recipientId: post.authorId,
+          type: "board_add",
+          actorId: userId,
+          actorName: actor?.displayName || "משתמש",
+          actorPhotoURL: actor?.photoURL || null,
+          postId,
+          postTitle: post.title,
+          boardId,
+          boardName: board.name,
+        });
+      }
+    } catch (notifError) {
+      console.error("addToBoard notification failed:", notifError);
+    }
   } catch (error) {
     console.error("addToBoard failed:", error);
     throw error;
@@ -767,6 +829,25 @@ export async function toggleUserFollow(targetUserId: string, followerId: string)
       batch.update(doc(db, "users", targetUserId), { followerCount: increment(1) });
       batch.update(doc(db, "users", followerId), { followingCount: increment(1) });
       await batch.commit();
+
+      // Create notification for followed user (non-blocking)
+      try {
+        const actor = await getUserProfile(followerId);
+        createNotification({
+          recipientId: targetUserId,
+          type: "follow",
+          actorId: followerId,
+          actorName: actor?.displayName || "משתמש",
+          actorPhotoURL: actor?.photoURL || null,
+          postId: null,
+          postTitle: null,
+          boardId: null,
+          boardName: null,
+        });
+      } catch (notifError) {
+        console.error("toggleUserFollow notification failed:", notifError);
+      }
+
       return true;
     } else {
       await deleteDoc(snap.docs[0].ref);
@@ -780,6 +861,87 @@ export async function toggleUserFollow(targetUserId: string, followerId: string)
     console.error("toggleUserFollow failed:", error);
     throw error;
   }
+}
+
+export async function getFollowingUserIds(userId: string): Promise<string[]> {
+  try {
+    const q = query(
+      collection(db, "userFollows"),
+      where("followerId", "==", userId)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data().followingId);
+  } catch (error) {
+    console.error("getFollowingUserIds failed:", error);
+    throw error;
+  }
+}
+
+export function subscribeToFollowingPosts(
+  followingIds: string[],
+  callback: (posts: Post[]) => void,
+  options?: { type?: PostType; limitCount?: number },
+  onError?: (error: FirestoreError) => void
+): () => void {
+  if (followingIds.length === 0) {
+    callback([]);
+    return () => {};
+  }
+
+  // Firestore `in` supports max 30 values — batch into chunks
+  const BATCH_SIZE = 30;
+  const chunks: string[][] = [];
+  for (let i = 0; i < followingIds.length; i += BATCH_SIZE) {
+    chunks.push(followingIds.slice(i, i + BATCH_SIZE));
+  }
+
+  const postsByChunk: Map<number, Post[]> = new Map();
+  const unsubscribes: (() => void)[] = [];
+
+  function mergeAndEmit() {
+    const allPosts: Post[] = [];
+    for (const posts of postsByChunk.values()) {
+      allPosts.push(...posts);
+    }
+    // Sort by createdAt desc and apply limit
+    allPosts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    const limitCount = options?.limitCount || 50;
+    callback(allPosts.slice(0, limitCount));
+  }
+
+  chunks.forEach((chunk, idx) => {
+    const constraints: QueryConstraint[] = [
+      where("authorId", "in", chunk),
+    ];
+    if (options?.type) {
+      constraints.push(where("type", "==", options.type));
+    }
+    constraints.push(orderBy("createdAt", "desc"));
+    if (options?.limitCount) {
+      constraints.push(limit(options.limitCount));
+    }
+
+    const q = query(collection(db, "posts"), ...constraints);
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        postsByChunk.set(idx, snapshot.docs.map((d) => ({
+          id: d.id,
+          boardCount: 0,
+          commentCount: 0,
+          ...d.data(),
+        }) as Post));
+        mergeAndEmit();
+      },
+      (error) => {
+        console.error("subscribeToFollowingPosts listener error:", error);
+        if (onError) onError(error);
+      }
+    );
+    unsubscribes.push(unsub);
+  });
+
+  return () => unsubscribes.forEach((u) => u());
 }
 
 export async function isFollowingUser(targetUserId: string, followerId: string): Promise<boolean> {
@@ -925,12 +1087,185 @@ export async function getRandomPost(excludeIds?: Set<string>): Promise<Post | nu
   try {
     const snap = await getDocs(query(collection(db, "posts"), limit(50)));
     const posts = snap.docs
-      .map((d) => ({ id: d.id, boardCount: 0, ...d.data() } as Post))
+      .map((d) => ({ id: d.id, boardCount: 0, commentCount: 0, ...d.data() } as Post))
       .filter((p) => !excludeIds || !excludeIds.has(p.id));
     if (posts.length === 0) return null;
     return posts[Math.floor(Math.random() * posts.length)];
   } catch (error) {
     console.error("getRandomPost failed:", error);
     throw error;
+  }
+}
+
+// ─── Comments ───────────────────────────────────────────────────────────
+
+export function subscribeToComments(
+  postId: string,
+  callback: (comments: Comment[]) => void,
+  onError?: (error: FirestoreError) => void
+) {
+  const q = query(
+    collection(db, "comments"),
+    where("postId", "==", postId),
+    orderBy("createdAt", "asc"),
+    limit(100)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const comments = snapshot.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as Comment
+      );
+      callback(comments);
+    },
+    (error) => {
+      console.error("subscribeToComments listener error:", error);
+      if (onError) onError(error);
+    }
+  );
+}
+
+export async function addComment(
+  postId: string,
+  data: { authorId: string; authorName: string; authorPhotoURL: string | null; body: string }
+): Promise<string> {
+  try {
+    const commentData = {
+      postId,
+      ...data,
+      createdAt: Timestamp.now(),
+    };
+
+    const docRef = await addDoc(collection(db, "comments"), commentData);
+    await updateDoc(doc(db, "posts", postId), { commentCount: increment(1) });
+
+    // Create notification for post author (non-blocking)
+    try {
+      const post = await getPost(postId);
+      if (post) {
+        createNotification({
+          recipientId: post.authorId,
+          type: "comment",
+          actorId: data.authorId,
+          actorName: data.authorName,
+          actorPhotoURL: data.authorPhotoURL,
+          postId,
+          postTitle: post.title,
+          boardId: null,
+          boardName: null,
+        });
+      }
+    } catch (notifError) {
+      console.error("addComment notification failed:", notifError);
+    }
+
+    return docRef.id;
+  } catch (error) {
+    console.error("addComment failed:", error);
+    throw error;
+  }
+}
+
+export async function deleteComment(commentId: string, postId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, "comments", commentId));
+    await updateDoc(doc(db, "posts", postId), { commentCount: increment(-1) });
+  } catch (error) {
+    console.error("deleteComment failed:", error);
+    throw error;
+  }
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────
+
+export async function createNotification(
+  data: Omit<Notification, "id" | "read" | "createdAt">
+): Promise<void> {
+  try {
+    // No self-notifications
+    if (data.actorId === data.recipientId) return;
+
+    await addDoc(collection(db, "notifications"), {
+      ...data,
+      read: false,
+      createdAt: Timestamp.now(),
+    });
+  } catch (error) {
+    console.error("createNotification failed:", error);
+  }
+}
+
+export function subscribeToNotifications(
+  userId: string,
+  callback: (notifications: Notification[]) => void,
+  onError?: (error: FirestoreError) => void
+) {
+  const q = query(
+    collection(db, "notifications"),
+    where("recipientId", "==", userId),
+    orderBy("createdAt", "desc"),
+    limit(50)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const notifications = snapshot.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as Notification
+      );
+      callback(notifications);
+    },
+    (error) => {
+      console.error("subscribeToNotifications listener error:", error);
+      if (onError) onError(error);
+    }
+  );
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+  try {
+    await updateDoc(doc(db, "notifications", notificationId), { read: true });
+  } catch (error) {
+    console.error("markNotificationRead failed:", error);
+    throw error;
+  }
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  try {
+    const q = query(
+      collection(db, "notifications"),
+      where("recipientId", "==", userId),
+      where("read", "==", false)
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) return;
+
+    const CHUNK_SIZE = 499;
+    for (let i = 0; i < snap.docs.length; i += CHUNK_SIZE) {
+      const chunk = snap.docs.slice(i, i + CHUNK_SIZE);
+      const batch = writeBatch(db);
+      chunk.forEach((d) => batch.update(d.ref, { read: true }));
+      await batch.commit();
+    }
+  } catch (error) {
+    console.error("markAllNotificationsRead failed:", error);
+    throw error;
+  }
+}
+
+export async function getUnreadNotificationCount(userId: string): Promise<number> {
+  try {
+    const q = query(
+      collection(db, "notifications"),
+      where("recipientId", "==", userId),
+      where("read", "==", false)
+    );
+    const snap = await getCountFromServer(q);
+    return snap.data().count;
+  } catch (error) {
+    console.error("getUnreadNotificationCount failed:", error);
+    return 0;
   }
 }

@@ -54,6 +54,7 @@ export interface Post {
   likeCount: number;
   saveCount: number;
   boardCount: number;
+  commentCount: number;
   sourceURL: string | null;
   sourceType: "instagram" | null;
   createdAt: Timestamp;
@@ -124,4 +125,31 @@ export interface Tag {
   name: string;
   postCount: number;
   lastUsedAt: Timestamp;
+}
+
+export interface Comment {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorName: string;
+  authorPhotoURL: string | null;
+  body: string;
+  createdAt: Timestamp;
+}
+
+export type NotificationType = "like" | "comment" | "follow" | "board_add";
+
+export interface Notification {
+  id: string;
+  recipientId: string;
+  type: NotificationType;
+  actorId: string;
+  actorName: string;
+  actorPhotoURL: string | null;
+  postId: string | null;
+  postTitle: string | null;
+  boardId: string | null;
+  boardName: string | null;
+  read: boolean;
+  createdAt: Timestamp;
 }

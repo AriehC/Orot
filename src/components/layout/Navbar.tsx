@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import NotificationBell from "./NotificationBell";
 import styles from "./Navbar.module.css";
 
 interface NavbarProps {
@@ -80,6 +81,7 @@ export default function Navbar({ searchQuery, onSearchChange, onCreateClick, onB
           </button>
           {user ? (
             <>
+              <NotificationBell />
               {onBoardsClick && (
                 <button className={styles.btn} onClick={onBoardsClick}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

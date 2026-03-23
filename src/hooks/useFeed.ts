@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Post } from "@/lib/types";
-import { subscribeToPosts } from "@/lib/firestore";
+import { Post, PostType } from "@/lib/types";
+import { subscribeToPosts, subscribeToFollowingPosts } from "@/lib/firestore";
 import { rankPosts } from "@/lib/ranking";
 
 interface UseFeedOptions {
   tag?: string;
   authorId?: string;
   search?: string;
+  type?: PostType;
+  followingUserIds?: string[];
 }
 
 export function useFeed(options?: UseFeedOptions) {
@@ -18,30 +20,50 @@ export function useFeed(options?: UseFeedOptions) {
   // Track ranked order by post ids — only re-rank when posts are added/removed
   const rankedOrderRef = useRef<string[]>([]);
 
+  // Stable reference for followingUserIds to avoid re-subscribing on every render
+  const followingIdsKey = options?.followingUserIds?.join(",") ?? "";
+
   useEffect(() => {
     setLoading(true);
     setError(null);
 
-    const unsubscribe = subscribeToPosts(
-      (fetchedPosts) => {
-        setPosts(fetchedPosts);
-        setLoading(false);
-        setError(null);
-      },
-      {
-        tag: options?.tag,
-        authorId: options?.authorId,
-        limitCount: 50,
-      },
-      (firestoreError) => {
-        console.error("useFeed: subscription error:", firestoreError);
-        setError("שגיאה בטעינת התוכן");
-        setLoading(false);
-      }
-    );
+    const onPosts = (fetchedPosts: Post[]) => {
+      setPosts(fetchedPosts);
+      setLoading(false);
+      setError(null);
+    };
+
+    const onErr = (firestoreError: { message: string }) => {
+      console.error("useFeed: subscription error:", firestoreError);
+      setError("שגיאה בטעינת התוכן");
+      setLoading(false);
+    };
+
+    let unsubscribe: () => void;
+
+    if (options?.followingUserIds) {
+      unsubscribe = subscribeToFollowingPosts(
+        options.followingUserIds,
+        onPosts,
+        { type: options?.type, limitCount: 50 },
+        onErr
+      );
+    } else {
+      unsubscribe = subscribeToPosts(
+        onPosts,
+        {
+          tag: options?.tag,
+          authorId: options?.authorId,
+          type: options?.type,
+          limitCount: 50,
+        },
+        onErr
+      );
+    }
 
     return unsubscribe;
-  }, [options?.tag, options?.authorId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options?.tag, options?.authorId, options?.type, followingIdsKey]);
 
   // Apply client-side search filtering
   const filteredPosts = useMemo(() => {
