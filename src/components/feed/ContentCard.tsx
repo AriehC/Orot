@@ -17,7 +17,6 @@ interface ContentCardProps {
   onSave: (postId: string) => void;
   onAddToBoard?: (postId: string) => void;
   onRemoveFromBoard?: (postId: string) => void;
-  onShowBoards?: (postId: string) => void;
   onClick?: (post: Post) => void;
   onShare?: (post: Post) => void;
 }
@@ -26,7 +25,7 @@ function isNewPost(createdAt: { toMillis: () => number }): boolean {
   return Date.now() - createdAt.toMillis() < 86400000;
 }
 
-export default function ContentCard({ post, index, isLiked, isSaved, onLike, onSave, onAddToBoard, onRemoveFromBoard, onShowBoards, onClick, onShare }: ContentCardProps) {
+export default function ContentCard({ post, index, isLiked, isSaved, onLike, onSave, onAddToBoard, onRemoveFromBoard, onClick, onShare }: ContentCardProps) {
   const typeConfig = TYPE_CONFIG[post.type];
   const isNew = isNewPost(post.createdAt);
   const boardCount = post.boardCount || 0;
@@ -101,18 +100,6 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
               <Link key={tag} href={`/tags/${encodeURIComponent(tag)}`} className={styles.tag} onClick={(e) => e.stopPropagation()}>#{tag}</Link>
             ))}
           </div>
-        )}
-
-        {boardCount > 0 && onShowBoards && (
-          <button
-            className={styles.boardCountBadge}
-            onClick={(e) => { e.stopPropagation(); onShowBoards(post.id); }}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-            נוסף ל-{boardCount} לוחות
-          </button>
         )}
 
         {post.sourceURL && (

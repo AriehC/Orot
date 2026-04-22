@@ -13,7 +13,6 @@ const CreateContentModal = dynamic(() => import("@/components/content/CreateCont
 const PostDetailModal = dynamic(() => import("@/components/content/PostDetailModal"));
 const BoardsSidebar = dynamic(() => import("@/components/boards/BoardsSidebar"));
 const AddToBoardModal = dynamic(() => import("@/components/boards/AddToBoardModal"));
-const BoardsContainingPostModal = dynamic(() => import("@/components/boards/BoardsContainingPostModal"));
 const ShareModal = dynamic(() => import("@/components/content/ShareModal"));
 import { useLike } from "@/hooks/useLike";
 import { useSave } from "@/hooks/useSave";
@@ -28,7 +27,6 @@ export default function HomePage() {
   const [showCreate, setShowCreate] = useState(false);
   const [showBoards, setShowBoards] = useState(false);
   const [addToBoardPostId, setAddToBoardPostId] = useState<string | null>(null);
-  const [showBoardsForPostId, setShowBoardsForPostId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [sharePost, setSharePost] = useState<Post | null>(null);
 
@@ -172,7 +170,6 @@ export default function HomePage() {
             onLike={handleLikeClick}
             onSave={handleSaveClick}
             onAddToBoard={handleAddToBoard}
-            onShowBoards={setShowBoardsForPostId}
             onPostClick={setSelectedPost}
             onShare={setSharePost}
           />
@@ -183,9 +180,6 @@ export default function HomePage() {
       {showBoards && <BoardsSidebar onClose={() => setShowBoards(false)} />}
       {addToBoardPostId && (
         <AddToBoardModal postId={addToBoardPostId} onClose={() => setAddToBoardPostId(null)} />
-      )}
-      {showBoardsForPostId && (
-        <BoardsContainingPostModal postId={showBoardsForPostId} onClose={() => setShowBoardsForPostId(null)} />
       )}
       {sharePost && (
         <ShareModal post={sharePost} onClose={() => setSharePost(null)} />
