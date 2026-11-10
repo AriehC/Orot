@@ -2,7 +2,7 @@ import { Timestamp } from "firebase/firestore";
 
 /**
  * Milliseconds from a Firestore Timestamp — or from the plain { seconds, nanoseconds }
- * object that server-rendered (firebase-admin) data arrives as.
+ * object that server-rendered (firestore-server) data arrives as.
  */
 export function timestampMillis(ts: Timestamp | { seconds: number; nanoseconds: number } | null | undefined): number {
   if (!ts) return 0;

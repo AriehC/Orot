@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getTagPostsAdmin } from "@/lib/firestore-admin";
+import { getTagPostsServer } from "@/lib/firestore-server";
 import TagClient from "./TagClient";
 
 interface TagPageProps {
@@ -9,7 +9,7 @@ interface TagPageProps {
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
   const { tagName } = await params;
   const tag = decodeURIComponent(tagName);
-  const posts = await getTagPostsAdmin(tag);
+  const posts = await getTagPostsServer(tag);
 
   const title = `#${tag}`;
   const description = posts.length > 0
@@ -37,7 +37,7 @@ export default async function TagPage({ params }: TagPageProps) {
   const tag = decodeURIComponent(tagName);
 
   // Fetch initial data server-side for SSR
-  const initialPosts = await getTagPostsAdmin(tag);
+  const initialPosts = await getTagPostsServer(tag);
 
   // JSON-LD structured data
   const jsonLd = {

@@ -26,6 +26,7 @@ npm run test:rules      # security-rules checks against the emulator
 | `src/components/` | UI grouped by feature: `feed/`, `content/`, `boards/`, `profile/`, `auth/`, `ui/`, `layout/` |
 | `src/lib/firebase.ts` | Firebase init — guards missing env with `isFirebaseConfigured` boolean |
 | `src/lib/firestore.ts` | ALL Firestore CRUD — real-time subscriptions, pagination, queries |
+| `src/lib/firestore-server.ts` | SSR/sitemap reads via `firebase/firestore/lite`, anonymous — sees only what rules allow publicly |
 | `src/lib/storage.ts` | Firebase Storage uploads |
 | `src/lib/types.ts` | ALL TypeScript interfaces: Post, Board, UserProfile, Like, Save, Tag, etc. |
 | `src/lib/ranking.ts` | Feed ranking algorithm |
@@ -74,6 +75,8 @@ npm run test:rules      # security-rules checks against the emulator
 - No `.firebaserc` — Firebase project ID (`orotoo`) is configured via CLI context
 - Composite indexes required: `boards(isPublic + followerCount)`, `boards(isPublic + createdAt)` — defined in `firestore.indexes.json`
 - `next.config.ts` allowlists image domains — add new domains there if using external images
-- SSR (firebase-admin) data has timestamps as plain `{seconds, nanoseconds}` — use `timestampMillis()` from utils, never `.toMillis()` directly
+- SSR data (`firestore-server.ts`) has timestamps as plain `{seconds, nanoseconds}` — use `timestampMillis()` from utils, never `.toMillis()` directly
+- Don't use `firebase-admin` in app code: Turbopack externalises it under a hashed alias in `.next/node_modules`, which Firebase Functions deploys drop (it's a devDependency, for scripts only)
+- Firebase frameworks backend needs `engines.node` ≥ 22 in package.json (Node 20 runtime is decommissioned)
 - Every collection the client listens to needs a rule — a denied `onSnapshot` crashes the Firestore SDK for the whole page ("INTERNAL ASSERTION FAILED ca9")
 - Board/post counts are denormalized — update `boardCount`, `likeCount`, `followerCount` etc. on both the document and the relation

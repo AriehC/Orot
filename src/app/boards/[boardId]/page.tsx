@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getBoardAdmin, getBoardPostsAdmin } from "@/lib/firestore-admin";
+import { getBoardServer, getBoardPostsServer } from "@/lib/firestore-server";
 import BoardDetailClient from "./BoardDetailClient";
 
 interface BoardPageProps {
@@ -8,7 +8,7 @@ interface BoardPageProps {
 
 export async function generateMetadata({ params }: BoardPageProps): Promise<Metadata> {
   const { boardId } = await params;
-  const board = await getBoardAdmin(boardId);
+  const board = await getBoardServer(boardId);
 
   if (!board || !board.isPublic) {
     return {
@@ -41,10 +41,10 @@ export default async function BoardPage({ params }: BoardPageProps) {
   const { boardId } = await params;
 
   // Only SSR for public boards
-  const board = await getBoardAdmin(boardId);
+  const board = await getBoardServer(boardId);
   const isPublicBoard = board && board.isPublic;
 
-  let initialPosts = isPublicBoard ? await getBoardPostsAdmin(boardId) : [];
+  let initialPosts = isPublicBoard ? await getBoardPostsServer(boardId) : [];
 
   // JSON-LD for public boards
   const jsonLd = isPublicBoard

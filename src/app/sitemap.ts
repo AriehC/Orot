@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
 import {
-  isAdminConfigured,
-  getAllPublicBoardIdsAdmin,
-  getAllTagNamesAdmin,
-  getAllUserIdsAdmin,
-} from "@/lib/firestore-admin";
+  isServerDbConfigured,
+  getAllPublicBoardIdsServer,
+  getAllTagNamesServer,
+  getAllUserIdsServer,
+} from "@/lib/firestore-server";
 
 const BASE_URL = "https://orotoo.web.app";
 
@@ -37,16 +37,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // If admin is not configured, return only static pages
-  if (!isAdminConfigured) {
+  // If the server database is not configured, return only static pages
+  if (!isServerDbConfigured) {
     return staticPages;
   }
 
   try {
     const [boardIds, tagNames, userIds] = await Promise.all([
-      getAllPublicBoardIdsAdmin(),
-      getAllTagNamesAdmin(),
-      getAllUserIdsAdmin(),
+      getAllPublicBoardIdsServer(),
+      getAllTagNamesServer(),
+      getAllUserIdsServer(),
     ]);
 
     const boardPages: MetadataRoute.Sitemap = boardIds.map((id) => ({

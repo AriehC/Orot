@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getUserProfileAdmin, getUserPublicBoardsAdmin } from "@/lib/firestore-admin";
+import { getUserProfileServer, getUserPublicBoardsServer } from "@/lib/firestore-server";
 import ProfileClient from "./ProfileClient";
 
 interface ProfilePageProps {
@@ -8,7 +8,7 @@ interface ProfilePageProps {
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
   const { userId } = await params;
-  const profile = await getUserProfileAdmin(userId);
+  const profile = await getUserProfileServer(userId);
 
   if (!profile) {
     return {
@@ -44,8 +44,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const { userId } = await params;
 
   // Fetch initial data server-side for SSR
-  const profile = await getUserProfileAdmin(userId);
-  const publicBoards = profile ? await getUserPublicBoardsAdmin(userId) : [];
+  const profile = await getUserProfileServer(userId);
+  const publicBoards = profile ? await getUserPublicBoardsServer(userId) : [];
 
   return (
     <ProfileClient
