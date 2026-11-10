@@ -5,6 +5,7 @@ import { updatePost } from "@/lib/firestore";
 import { Post, PostType } from "@/lib/types";
 import { CARD_COLORS, TYPE_OPTIONS } from "@/lib/constants";
 import Modal from "@/components/ui/Modal";
+import conceptStyles from "@/components/concepts/Concepts.module.css";
 import toast from "react-hot-toast";
 import styles from "./CreateContentModal.module.css";
 
@@ -95,6 +96,7 @@ export default function EditPostModal({ post, onClose, onSaved }: EditPostModalP
           onChange={(e) => setBody(e.target.value)}
           maxLength={5000}
         />
+        <span className={conceptStyles.bodyHint}>אפשר לקשר למושג בעזרת [[שם המושג]] — למשל [[צ׳אקרת הלב]]</span>
       </div>
 
       <div className={styles.formGroup}>

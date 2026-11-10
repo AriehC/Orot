@@ -10,6 +10,12 @@ npm run dev        # dev server
 npm run build      # production build (MUST pass before deploy)
 firebase deploy    # full deploy: hosting + rules + indexes → orotoo.web.app
 npm run seed       # seed Firestore with sample data
+
+# Local testing against Firebase emulators (needs JDK 21+; never touches the real project)
+npm run emulators       # auth + firestore + storage emulators, project demo-orot
+npm run seed:emulators  # seed the emulators
+npm run dev:emulators   # app on :3001 wired to the emulators (.env.emulators)
+npm run test:rules      # security-rules checks against the emulator
 ```
 
 ## Module Map
@@ -25,7 +31,11 @@ npm run seed       # seed Firestore with sample data
 | `src/lib/ranking.ts` | Feed ranking algorithm |
 | `src/hooks/` | One hook per concern: useFeed, useLike, useSave, useBoards, useTags, useBoardLike, useBoardFollow, useUserFollow |
 | `src/contexts/` | AuthContext (user + profile + auth methods), ThemeContext (dark mode) |
+| `src/lib/wikilinks.ts` | `[[concept]]` parsing, `normalizeConcept` (doc ids for tags) |
+| `src/components/concepts/` | WikiText/WikiLink (links + hover preview), ConceptGraph (local graph), ConceptEditModal |
 | `scripts/seed.ts` | Firestore seed script (uses firebase-admin) |
+| `scripts/test-rules.ts` | Security-rules checks (run against emulators) |
+| `scripts/remove-user-emails.ts` | One-off: strip legacy `email` from public profiles (`--apply`) |
 
 ## Rules
 
@@ -54,7 +64,9 @@ npm run seed       # seed Firestore with sample data
 - **Post**: type (note|quote|image|video), tags[], boardCount, likeCount, saveCount
 - **Board**: isPublic, likeCount, followerCount, ownerName — default board "האוסף שלי" auto-created on signup
 - **Social**: separate collections for `likes`, `saves`, `boardLikes`, `boardFollows`, `userFollows`
-- **Tag**: free-form user-created, stored on posts + `tags` collection for autocomplete
+- **Tag = concept page**: `tags/{normalizeConcept(name)}` holds a shared wiki page — description, aliases, related, links (all normalized keys). Any signed-in user can edit
+- **Post.links**: normalized `[[ ]]` targets, recomputed on create/update — powers "mentioned in" on concept pages
+- **No email in `users/`**: emails live only in Firebase Auth; rules reject an `email` field
 
 ## Pitfalls
 
@@ -62,4 +74,6 @@ npm run seed       # seed Firestore with sample data
 - No `.firebaserc` — Firebase project ID (`orotoo`) is configured via CLI context
 - Composite indexes required: `boards(isPublic + followerCount)`, `boards(isPublic + createdAt)` — defined in `firestore.indexes.json`
 - `next.config.ts` allowlists image domains — add new domains there if using external images
+- SSR (firebase-admin) data has timestamps as plain `{seconds, nanoseconds}` — use `timestampMillis()` from utils, never `.toMillis()` directly
+- Every collection the client listens to needs a rule — a denied `onSnapshot` crashes the Firestore SDK for the whole page ("INTERNAL ASSERTION FAILED ca9")
 - Board/post counts are denormalized — update `boardCount`, `likeCount`, `followerCount` etc. on both the document and the relation

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Comment } from "@/lib/types";
+import { timestampMillis } from "@/lib/utils";
 import { subscribeToComments, addComment, deleteComment } from "@/lib/firestore";
 import { Timestamp } from "firebase/firestore";
 
@@ -73,7 +74,7 @@ export function useComments(postId: string) {
         // Revert on error
         if (removed) {
           setComments((prev) => [...prev, removed].sort(
-            (a, b) => a.createdAt.toMillis() - b.createdAt.toMillis()
+            (a, b) => timestampMillis(a.createdAt) - timestampMillis(b.createdAt)
           ));
         }
       }

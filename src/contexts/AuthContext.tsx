@@ -10,7 +10,7 @@ import {
   updateProfile,
   signOut as firebaseSignOut,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, deleteField, Timestamp } from "firebase/firestore";
 import { auth, db, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 import { createBoard } from "@/lib/firestore";
 import toast from "react-hot-toast";
@@ -39,7 +39,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const snap = await getDoc(userRef);
 
     if (snap.exists()) {
-      const data = snap.data();
+      const { email: legacyEmail, ...data } = snap.data();
+      // Older profiles stored the email publicly — remove it on sign-in
+      if (legacyEmail !== undefined) {
+        updateDoc(userRef, { email: deleteField() }).catch((err) =>
+          console.error("Failed to remove legacy email:", err)
+        );
+      }
       return {
         id: snap.id,
         followerCount: 0,
@@ -65,7 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const newProfile: Omit<UserProfile, "id"> = {
       displayName,
-      email: firebaseUser.email || "",
       photoURL,
       bio: "",
       tagline: "",

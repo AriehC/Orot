@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:emulators": "set -a && . ./.env.emulators && set +a && next dev --port 3001",
+    "emulators": "firebase emulators:start --project demo-orot --only auth,firestore,storage",
     "build": "next build",
     "start": "next start",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "seed:emulators": "set -a && . ./.env.emulators && set +a && tsx scripts/seed.ts",
+    "test:rules": "tsx scripts/test-rules.ts"
   },
   "dependencies": {
     "firebase": "^12.10.0",

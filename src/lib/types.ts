@@ -24,7 +24,6 @@ export interface SocialLink {
 export interface UserProfile {
   id: string;
   displayName: string;
-  email: string;
   photoURL: string | null;
   bio: string;
   tagline: string;
@@ -57,6 +56,8 @@ export interface Post {
   commentCount: number;
   sourceURL: string | null;
   sourceType: "instagram" | null;
+  /** Concepts referenced via [[ ]] in the body (normalized). Missing on older posts. */
+  links?: string[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -121,10 +122,34 @@ export interface UserFollow {
   createdAt: Timestamp;
 }
 
+/**
+ * A tag doubles as a shared "concept page" (wiki-style).
+ * Doc id = normalizeConcept(name). Concept fields are optional because
+ * tags created implicitly by posts start empty and get filled in later.
+ */
 export interface Tag {
   name: string;
   postCount: number;
   lastUsedAt: Timestamp;
+  /** Shared description; may contain [[wiki links]] */
+  description?: string;
+  /** Alternative names, normalized (lowercase, trimmed) */
+  aliases?: string[];
+  /** Explicitly related concept names (normalized) */
+  related?: string[];
+  /** Concepts linked via [[ ]] inside the description (normalized) */
+  links?: string[];
+  updatedBy?: string;
+  updatedByName?: string;
+  updatedAt?: Timestamp;
+}
+
+export interface ConceptGraphNode {
+  id: string;
+  label: string;
+  /** strength of connection to the center, 1..3 */
+  weight: number;
+  kind: "center" | "related" | "link" | "backlink" | "cooccur";
 }
 
 export interface Comment {

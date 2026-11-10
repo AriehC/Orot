@@ -1,4 +1,5 @@
 import { Post } from "./types";
+import { timestampMillis } from "./utils";
 
 // ── Tuning knobs ────────────────────────────────────────────────────────
 const SAVE_WEIGHT = 2; // saves signal deeper value than likes
@@ -28,7 +29,7 @@ export function rankPosts(posts: Post[]): Post[] {
 }
 
 function computeScore(post: Post, now: number): number {
-  const ageHours = (now - post.createdAt.toMillis()) / 3600000;
+  const ageHours = (now - timestampMillis(post.createdAt)) / 3600000;
 
   // ── Weighted engagement ───────────────────────────────────────────────
   // Saves and board-adds matter more than a quick like

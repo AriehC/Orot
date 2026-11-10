@@ -17,6 +17,8 @@ interface MasonryFeedProps {
   onRemoveFromBoard?: (postId: string) => void;
   onPostClick?: (post: Post) => void;
   onShare?: (post: Post) => void;
+  /** Override column counts, e.g. when the feed sits in a narrower column beside a sidebar */
+  breakpointCols?: Record<string | number, number>;
 }
 
 const SKELETON_HEIGHTS = [140, 180, 160, 200, 150, 190, 170, 210];
@@ -52,12 +54,13 @@ export default function MasonryFeed({
   onRemoveFromBoard,
   onPostClick,
   onShare,
+  breakpointCols = BREAKPOINT_COLS,
 }: MasonryFeedProps) {
   if (loading) {
     return (
       <div className={styles.container}>
         <Masonry
-          breakpointCols={BREAKPOINT_COLS}
+          breakpointCols={breakpointCols}
           className={styles.masonry}
           columnClassName={styles.masonryColumn}
         >
@@ -83,7 +86,7 @@ export default function MasonryFeed({
   return (
     <div className={styles.container}>
       <Masonry
-        breakpointCols={BREAKPOINT_COLS}
+        breakpointCols={breakpointCols}
         className={styles.masonry}
         columnClassName={styles.masonryColumn}
       >

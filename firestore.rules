@@ -31,11 +31,14 @@ service cloud.firestore {
     // --- Users ---
     match /users/{userId} {
       allow read: if true;
+      // Email lives only in Firebase Auth — never in the public profile
       allow create: if isOwner(userId)
+        && !('email' in incomingData())
         && isValidString(incomingData().displayName, 50)
         && incomingData().followerCount == 0
         && incomingData().followingCount == 0;
       allow update: if isOwner(userId)
+        && !('email' in incomingData())
         && isValidString(incomingData().displayName, 50)
         && (!('bio' in incomingData()) || isValidString(incomingData().bio, 500))
         // Prevent self-manipulation of social counters
@@ -51,6 +54,7 @@ service cloud.firestore {
         && isValidString(incomingData().title, 200)
         && (!('body' in incomingData()) || isValidString(incomingData().body, 5000))
         && incomingData().type in ['note', 'quote', 'image', 'video']
+        && (!('links' in incomingData()) || (incomingData().links is list && incomingData().links.size() <= 50))
         && incomingData().likeCount == 0
         && incomingData().saveCount == 0
         && incomingData().boardCount == 0;
@@ -60,7 +64,7 @@ service cloud.firestore {
         isOwner(existingData().authorId)
           && incomingData().authorId == existingData().authorId
         ||
-        onlyChanged(['likeCount', 'saveCount', 'boardCount'])
+        onlyChanged(['likeCount', 'saveCount', 'boardCount', 'commentCount'])
       );
     }
 
@@ -128,10 +132,47 @@ service cloud.firestore {
     }
 
     // --- Tags ---
+    // --- Comments (public, like posts) ---
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isAuth()
+        && incomingData().authorId == request.auth.uid
+        && incomingData().postId is string
+        && isValidString(incomingData().body, 1000);
+      allow delete: if isOwner(existingData().authorId);
+    }
+
+    // --- Notifications (private to the recipient) ---
+    match /notifications/{notificationId} {
+      allow read: if isOwner(existingData().recipientId);
+      allow create: if isAuth()
+        && incomingData().actorId == request.auth.uid
+        && incomingData().recipientId != request.auth.uid
+        && incomingData().read == false;
+      allow update: if isOwner(existingData().recipientId)
+        && onlyChanged(['read']);
+      allow delete: if isOwner(existingData().recipientId);
+    }
+
+    // Tags double as shared concept pages (wiki): any signed-in user may edit
+    function isValidConcept() {
+      return isValidString(incomingData().name, 60)
+        && (!('description' in incomingData()) || isValidString(incomingData().description, 3000))
+        && (!('aliases' in incomingData()) || (incomingData().aliases is list && incomingData().aliases.size() <= 10))
+        && (!('related' in incomingData()) || (incomingData().related is list && incomingData().related.size() <= 15))
+        && (!('links' in incomingData()) || (incomingData().links is list && incomingData().links.size() <= 50));
+    }
+
     match /tags/{tagName} {
       allow read: if true;
-      allow create, update: if isAuth()
-        && isValidString(incomingData().name, 30);
+      allow create: if isAuth()
+        && isValidConcept()
+        && (!('updatedBy' in incomingData()) || incomingData().updatedBy == request.auth.uid);
+      allow update: if isAuth()
+        && isValidConcept()
+        // Editor attribution can only be set to yourself
+        && (!incomingData().diff(existingData()).affectedKeys().hasAny(['updatedBy'])
+            || incomingData().updatedBy == request.auth.uid);
     }
   }
 }

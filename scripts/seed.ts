@@ -11,7 +11,7 @@ import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 // Try to init with default credentials (works with `firebase login` context)
 if (getApps().length === 0) {
-  initializeApp({ projectId: "orotoo" });
+  initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID ?? "orotoo" });
 }
 
 const db = getFirestore();
@@ -19,7 +19,6 @@ const db = getFirestore();
 const SEED_USER_ID = "seed-user";
 const SEED_USER = {
   displayName: "אורות",
-  email: "orot@example.com",
   photoURL: null,
   bio: "ציטוטים והשראה רוחנית מגדולי ההוגים והמורים הרוחניים",
   followerCount: 0,

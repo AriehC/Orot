@@ -1,8 +1,18 @@
 import { Timestamp } from "firebase/firestore";
 
+/**
+ * Milliseconds from a Firestore Timestamp — or from the plain { seconds, nanoseconds }
+ * object that server-rendered (firebase-admin) data arrives as.
+ */
+export function timestampMillis(ts: Timestamp | { seconds: number; nanoseconds: number } | null | undefined): number {
+  if (!ts) return 0;
+  if (typeof (ts as Timestamp).toMillis === "function") return (ts as Timestamp).toMillis();
+  return ts.seconds * 1000 + Math.floor(ts.nanoseconds / 1e6);
+}
+
 export function formatRelativeTime(timestamp: Timestamp): string {
   const now = Date.now();
-  const time = timestamp.toMillis();
+  const time = timestampMillis(timestamp);
   const diff = now - time;
 
   const minutes = Math.floor(diff / 60000);

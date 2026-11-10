@@ -20,8 +20,11 @@ import {
   writeBatch,
   FirestoreError,
   getCountFromServer,
+  deleteField,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { normalizeConcept, extractLinks } from "./wikilinks";
+import { timestampMillis } from "./utils";
 import { deleteMedia } from "./storage";
 import { UserProfile, Post, PostType, Board, BoardItem, Tag, Comment, Notification } from "./types";
 
@@ -31,7 +34,9 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
   try {
     const snap = await getDoc(doc(db, "users", userId));
     if (!snap.exists()) return null;
-    const data = snap.data();
+    // Never surface a legacy email field, even if a stale doc still has one
+    const { email: _legacyEmail, ...data } = snap.data();
+    void _legacyEmail;
     return {
       ...data,
       id: snap.id,
@@ -51,7 +56,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 
 export async function updateUserProfile(userId: string, data: Partial<Omit<UserProfile, "id">>) {
   try {
-    await updateDoc(doc(db, "users", userId), { ...data, updatedAt: Timestamp.now() });
+    // email: deleteField() — strips the legacy public email field (rules reject it)
+    await updateDoc(doc(db, "users", userId), { ...data, email: deleteField(), updatedAt: Timestamp.now() });
   } catch (error) {
     console.error("updateUserProfile failed:", error);
     throw error;
@@ -260,6 +266,7 @@ export async function createPost(data: Omit<Post, "id" | "createdAt" | "updatedA
   try {
     const postData = {
       ...data,
+      links: extractLinks(data.body),
       likeCount: 0,
       saveCount: 0,
       boardCount: 0,
@@ -274,7 +281,7 @@ export async function createPost(data: Omit<Post, "id" | "createdAt" | "updatedA
     if (data.tags.length > 0) {
       const batch = writeBatch(db);
       for (const tag of data.tags) {
-        const tagRef = doc(db, "tags", tag.toLowerCase());
+        const tagRef = doc(db, "tags", normalizeConcept(tag));
         batch.set(tagRef, {
           name: tag,
           postCount: increment(1),
@@ -296,7 +303,8 @@ export async function updatePost(
   data: Partial<Pick<Post, "title" | "body" | "tags" | "color" | "type">>
 ) {
   try {
-    await updateDoc(doc(db, "posts", postId), { ...data, updatedAt: Timestamp.now() });
+    const links = data.body !== undefined ? { links: extractLinks(data.body) } : {};
+    await updateDoc(doc(db, "posts", postId), { ...data, ...links, updatedAt: Timestamp.now() });
   } catch (error) {
     console.error("updatePost failed:", error);
     throw error;
@@ -356,7 +364,7 @@ export async function deletePost(postId: string) {
     if (postData && postData.tags?.length > 0) {
       const batch = writeBatch(db);
       for (const tag of postData.tags as string[]) {
-        const tagRef = doc(db, "tags", tag.toLowerCase());
+        const tagRef = doc(db, "tags", normalizeConcept(tag));
         batch.update(tagRef, { postCount: increment(-1) });
       }
       await batch.commit();
@@ -1042,6 +1050,102 @@ export async function getTrendingTags(maxResults = 15): Promise<Tag[]> {
     return snap.docs.map((d) => d.data() as Tag);
   } catch (error) {
     console.error("getTrendingTags failed:", error);
+    throw error;
+  }
+}
+
+// ─── Concepts (tags as shared wiki pages) ───────────────────────────────────
+
+function docToConcept(id: string, data: Record<string, unknown>): Tag {
+  return {
+    postCount: 0,
+    aliases: [],
+    related: [],
+    links: [],
+    description: "",
+    ...data,
+    name: (data.name as string) || id,
+  } as unknown as Tag;
+}
+
+/** Find a concept by name or alias. Returns null if nothing matches. */
+export async function getConcept(name: string): Promise<Tag | null> {
+  const key = normalizeConcept(name);
+  if (!key) return null;
+  try {
+    const snap = await getDoc(doc(db, "tags", key));
+    if (snap.exists()) return docToConcept(snap.id, snap.data());
+
+    const aliasSnap = await getDocs(
+      query(collection(db, "tags"), where("aliases", "array-contains", key), limit(1))
+    );
+    if (!aliasSnap.empty) return docToConcept(aliasSnap.docs[0].id, aliasSnap.docs[0].data());
+    return null;
+  } catch (error) {
+    console.error("getConcept failed:", error);
+    throw error;
+  }
+}
+
+/** Create or update the shared page of a concept. Anyone signed in can edit (wiki). */
+export async function saveConcept(
+  name: string,
+  data: { description: string; aliases: string[]; related: string[] },
+  editor: { uid: string; displayName: string }
+): Promise<void> {
+  const key = normalizeConcept(name);
+  try {
+    await setDoc(
+      doc(db, "tags", key),
+      {
+        name: name.trim(),
+        description: data.description,
+        aliases: data.aliases.filter((a) => a !== key),
+        related: data.related.filter((r) => r !== key),
+        links: extractLinks(data.description).filter((l) => l !== key),
+        postCount: increment(0),
+        updatedBy: editor.uid,
+        updatedByName: editor.displayName,
+        updatedAt: Timestamp.now(),
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.error("saveConcept failed:", error);
+    throw error;
+  }
+}
+
+/** Posts that mention the concept with [[ ]] in their body. */
+export async function getConceptMentionPosts(name: string, maxResults = 50): Promise<Post[]> {
+  try {
+    const snap = await getDocs(
+      query(collection(db, "posts"), where("links", "array-contains", normalizeConcept(name)), limit(maxResults))
+    );
+    return snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as Post))
+      .sort((a, b) => timestampMillis(b.createdAt) - timestampMillis(a.createdAt));
+  } catch (error) {
+    console.error("getConceptMentionPosts failed:", error);
+    throw error;
+  }
+}
+
+/** Concepts whose page points at this one (as related or via a [[ ]] link). */
+export async function getConceptBacklinks(name: string, maxResults = 30): Promise<Tag[]> {
+  const key = normalizeConcept(name);
+  try {
+    const [relatedSnap, linkSnap] = await Promise.all([
+      getDocs(query(collection(db, "tags"), where("related", "array-contains", key), limit(maxResults))),
+      getDocs(query(collection(db, "tags"), where("links", "array-contains", key), limit(maxResults))),
+    ]);
+    const byId = new Map<string, Tag>();
+    for (const d of [...relatedSnap.docs, ...linkSnap.docs]) {
+      if (d.id !== key) byId.set(d.id, docToConcept(d.id, d.data()));
+    }
+    return [...byId.values()];
+  } catch (error) {
+    console.error("getConceptBacklinks failed:", error);
     throw error;
   }
 }

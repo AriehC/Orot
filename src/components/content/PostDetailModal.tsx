@@ -10,6 +10,9 @@ import EditPostModal from "./EditPostModal";
 import ShareModal from "./ShareModal";
 import MeditationTimer from "./MeditationTimer";
 import CommentsSection from "./CommentsSection";
+import WikiText from "@/components/concepts/WikiText";
+import ConceptGraph, { buildGraphNodes } from "@/components/concepts/ConceptGraph";
+import { parseWikiText } from "@/lib/wikilinks";
 import styles from "./PostDetailModal.module.css";
 
 interface PostDetailModalProps {
@@ -39,6 +42,15 @@ export default function PostDetailModal({
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const typeConfig = TYPE_CONFIG[currentPost.type];
   const isOwner = currentUserId === currentPost.authorId;
+  // Local graph: the post in the middle, its [[ ]] concepts and tags around it
+  const linkedConcepts = currentPost.body
+    ? parseWikiText(currentPost.body).flatMap((seg) => (seg.kind === "link" ? [seg.concept] : []))
+    : [];
+  const graphNodes = buildGraphNodes("", [
+    { kind: "related", weight: 2, labels: currentPost.tags },
+    { kind: "link", weight: 3, labels: linkedConcepts },
+  ]);
+
   const isMeditation = currentPost.tags.some((t) =>
     ["מדיטציה", "מיינדפולנס", "נשימה", "מדיטציות"].includes(t)
   );
@@ -153,9 +165,9 @@ export default function PostDetailModal({
 
           {currentPost.body && (
             currentPost.type === "quote" ? (
-              <p className={styles.quoteBody}>{currentPost.body}</p>
+              <p className={styles.quoteBody}><WikiText text={currentPost.body} onNavigate={onClose} /></p>
             ) : (
-              <p className={styles.text}>{currentPost.body}</p>
+              <p className={styles.text}><WikiText text={currentPost.body} onNavigate={onClose} /></p>
             )
           )}
 
@@ -171,6 +183,12 @@ export default function PostDetailModal({
                   #{tag}
                 </Link>
               ))}
+            </div>
+          )}
+
+          {graphNodes.length > 0 && (
+            <div className={styles.graphWrap}>
+              <ConceptGraph centerLabel={currentPost.title} nodes={graphNodes} title="המושגים בפוסט" onNavigate={onClose} />
             </div>
           )}
 

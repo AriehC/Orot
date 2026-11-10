@@ -110,7 +110,10 @@ function docToBoard(id: string, data: Record<string, unknown>): Board {
   });
 }
 
-function docToUserProfile(id: string, data: Record<string, unknown>): UserProfile {
+function docToUserProfile(id: string, raw: Record<string, unknown>): UserProfile {
+  // Drop the legacy email field so it never reaches SSR HTML
+  const { email: _legacyEmail, ...data } = raw;
+  void _legacyEmail;
   return serialiseTimestamps<UserProfile>({
     id,
     followerCount: (data.followerCount as number) ?? 0,

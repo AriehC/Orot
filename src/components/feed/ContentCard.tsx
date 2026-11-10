@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import WikiText from "@/components/concepts/WikiText";
 import Image from "next/image";
 import { Post } from "@/lib/types";
-import { formatNumber, formatRelativeTime } from "@/lib/utils";
+import { formatNumber, formatRelativeTime, timestampMillis } from "@/lib/utils";
 import { DARK_CARD_COLORS, TYPE_CONFIG } from "@/lib/constants";
 import styles from "./ContentCard.module.css";
 
@@ -21,8 +22,8 @@ interface ContentCardProps {
   onShare?: (post: Post) => void;
 }
 
-function isNewPost(createdAt: { toMillis: () => number }): boolean {
-  return Date.now() - createdAt.toMillis() < 86400000;
+function isNewPost(createdAt: Post["createdAt"]): boolean {
+  return Date.now() - timestampMillis(createdAt) < 86400000;
 }
 
 export default function ContentCard({ post, index, isLiked, isSaved, onLike, onSave, onAddToBoard, onRemoveFromBoard, onClick, onShare }: ContentCardProps) {
@@ -88,9 +89,9 @@ export default function ContentCard({ post, index, isLiked, isSaved, onLike, onS
 
         {post.body && (
           post.type === "quote" ? (
-            <p className={styles.quoteBody}>{post.body}</p>
+            <p className={styles.quoteBody}><WikiText text={post.body} /></p>
           ) : (
-            <p className={styles.cardText}>{post.body}</p>
+            <p className={styles.cardText}><WikiText text={post.body} /></p>
           )
         )}
 
