@@ -7,6 +7,7 @@ import type { Board } from "@/lib/types";
 import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 import styles from "@/components/content/CreateContentModal.module.css";
+import conceptStyles from "@/components/concepts/Concepts.module.css";
 
 const BOARD_COLORS = ["#E8985E", "#6B8FA3", "#9B7ED8", "#5DA87E", "#D47B7B", "#C4A355"];
 
@@ -19,7 +20,8 @@ export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModa
   const { user, profile } = useAuth();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
+  // All boards are public — the site keeps no private content
+  const isPublic = true;
   const [color, setColor] = useState(BOARD_COLORS[0]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -82,25 +84,7 @@ export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModa
         />
       </div>
 
-      <div className={styles.formGroup}>
-        <label>נראות</label>
-        <div className={styles.typeSelector}>
-          <button
-            className={isPublic ? styles.typeBtnActive : styles.typeBtn}
-            onClick={() => setIsPublic(true)}
-            type="button"
-          >
-            🌐 ציבורי
-          </button>
-          <button
-            className={!isPublic ? styles.typeBtnActive : styles.typeBtn}
-            onClick={() => setIsPublic(false)}
-            type="button"
-          >
-            🔒 פרטי
-          </button>
-        </div>
-      </div>
+      <p className={conceptStyles.editHint}>כל הלוחות באורות ציבוריים וגלויים לכולם.</p>
 
       <div className={styles.formGroup}>
         <label>צבע הלוח</label>

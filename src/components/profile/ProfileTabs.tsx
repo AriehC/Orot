@@ -196,7 +196,7 @@ export default function ProfileTabs({ userId, boards, mainBoardId, isOwnProfile 
                   <h3 style={{ color: board.color }}>{board.name}</h3>
                   <p>{board.description}</p>
                   <span className={styles.boardCardMeta}>
-                    {board.itemCount} פריטים • {board.isPublic ? "ציבורי" : "פרטי"}
+                    {board.itemCount} פריטים
                   </span>
                 </Link>
               ))}

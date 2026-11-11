@@ -54,7 +54,7 @@ export default function BoardsDiscoverPage() {
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>גלו לוחות</h1>
-            <p className={styles.subtitle}>אוספים ציבוריים של תוכן רוחני מכל הקהילה</p>
+            <p className={styles.subtitle}>אוספים של תוכן רוחני מכל הקהילה</p>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export default function BoardsDiscoverPage() {
         {loading ? (
           <Spinner />
         ) : boards.length === 0 ? (
-          <EmptyState icon="📋" text="עדיין אין לוחות ציבוריים" />
+          <EmptyState icon="📋" text="עדיין אין לוחות" />
         ) : (
           <div className={styles.grid}>
             {boards.map((board) => (

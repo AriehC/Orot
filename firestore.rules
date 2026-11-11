@@ -115,10 +115,11 @@ service cloud.firestore {
 
     // --- Boards ---
     match /boards/{boardId} {
-      allow read: if existingData().isPublic == true
-        || isOwner(existingData().ownerId);
+      // Everything on the site is public — there are no private boards
+      allow read: if true;
       allow create: if isAuth()
         && incomingData().ownerId == request.auth.uid
+        && incomingData().isPublic == true
         && isValidString(incomingData().name, 100)
         && (!('description' in incomingData()) || isValidString(incomingData().description, 500))
         && incomingData().likeCount == 0
@@ -126,6 +127,7 @@ service cloud.firestore {
       allow update: if (
         isOwner(existingData().ownerId)
           && incomingData().ownerId == existingData().ownerId
+          && incomingData().isPublic == true
       ) || (
         // Likes, follows, and a post being removed from the board by its author
         isAuth()
@@ -137,7 +139,7 @@ service cloud.firestore {
 
     // --- Board Items ---
     match /boardItems/{itemId} {
-      allow read: if isAuth();
+      allow read: if true;
       allow create: if isAuth()
         && incomingData().addedBy == request.auth.uid
         && isBoardOwner(incomingData().boardId);

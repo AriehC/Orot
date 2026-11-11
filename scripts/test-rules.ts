@@ -7,7 +7,7 @@
 import { initializeApp, deleteApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, createUserWithEmailAndPassword, Auth } from "firebase/auth";
 import {
-  getFirestore, connectFirestoreEmulator, doc, setDoc, updateDoc, getDoc,
+  getFirestore, connectFirestoreEmulator, doc, setDoc, updateDoc, getDoc, getDocs, query, collection, where,
   deleteField, deleteDoc, writeBatch, Timestamp, increment, Firestore,
 } from "firebase/firestore";
 
@@ -162,10 +162,24 @@ async function main() {
     createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
   });
   await expectOk("create a public board", () => setDoc(doc(a.db, "boards", boardId), board(a.uid, true)));
+  await expectDenied("create a private board", () => setDoc(doc(a.db, "boards", `private-${a.uid}`), board(a.uid, false)));
+  await expectDenied("make a board private", () => updateDoc(doc(a.db, "boards", boardId), { isPublic: false }));
   await expectOk("owner adds a post to the board", () =>
     setDoc(doc(a.db, "boardItems", `bi-${a.uid}`), { boardId, postId, addedBy: a.uid, addedAt: Timestamp.now() }));
   await expectDenied("add a post to someone else's board", () =>
     setDoc(doc(b.db, "boardItems", `bi-${b.uid}`), { boardId, postId, addedBy: b.uid, addedAt: Timestamp.now() }));
+  await expectOk("logged-out visitor reads the board and its items", async () => {
+    const anonApp = initializeApp({ apiKey: "demo-key", projectId: PROJECT }, `anon-${Date.now()}`);
+    const anonDb = getFirestore(anonApp);
+    connectFirestoreEmulator(anonDb, "127.0.0.1", 8080);
+    try {
+      await getDoc(doc(anonDb, "boards", boardId));
+      const items = await getDocs(query(collection(anonDb, "boardItems"), where("boardId", "==", boardId)));
+      if (items.size !== 1) throw new Error(`expected 1 board item, got ${items.size}`);
+    } finally {
+      await deleteApp(anonApp);
+    }
+  });
   await expectOk("like a board", () =>
     setDoc(doc(b.db, "boardLikes", `bl-${b.uid}`), { boardId, userId: b.uid, createdAt: Timestamp.now() }));
   await expectOk("non-owner bumps board likeCount", () => updateDoc(doc(b.db, "boards", boardId), { likeCount: increment(1) }));

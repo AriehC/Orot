@@ -67,7 +67,6 @@ export default function BoardDetailClient({ boardId, initialBoard, initialPosts 
             </Link>
             <div className={styles.titleRow}>
               <h1 className={styles.title}>{board.name}</h1>
-              <span aria-label={board.isPublic ? "ציבורי" : "פרטי"}>{board.isPublic ? "\uD83C\uDF10" : "\uD83D\uDD12"}</span>
             </div>
             {board.description && <p className={styles.description}>{board.description}</p>}
           </div>

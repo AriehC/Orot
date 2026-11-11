@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ownerId: firebaseUser.uid,
       ownerName: displayName,
       ownerPhotoURL: photoURL,
-      isPublic: false,
+      isPublic: true,
     });
 
     const newProfile: Omit<UserProfile, "id"> = {

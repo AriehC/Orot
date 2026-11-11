@@ -63,7 +63,7 @@ npm run test:rules      # security-rules checks against the emulator
 ## Data Model (key fields)
 
 - **Post**: type (note|quote|image|video), tags[], boardCount, likeCount, saveCount
-- **Board**: isPublic, likeCount, followerCount, ownerName — default board "האוסף שלי" auto-created on signup
+- **Board**: always public (`isPublic` is kept but rules force `true` — the site has no private content), likeCount, followerCount, ownerName — default board "האוסף שלי" auto-created on signup
 - **Social**: separate collections for `likes`, `saves`, `boardLikes`, `boardFollows`, `userFollows`
 - **Tag = concept page**: `tags/{normalizeConcept(name)}` holds a shared wiki page — description, aliases, related, links (all normalized keys). Any signed-in user can edit
 - **Post.links**: normalized `[[ ]]` targets, recomputed on create/update — powers "mentioned in" on concept pages

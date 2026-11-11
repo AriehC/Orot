@@ -63,8 +63,7 @@ export default function BoardsSidebar({ onClose }: BoardsSidebarProps) {
               </div>
               <p>{board.description}</p>
               <div className={styles.boardMeta}>
-                <span>{board.isPublic ? "ציבורי" : "פרטי"}</span>
-                <span>• {board.itemCount} פריטים</span>
+                <span>{board.itemCount} פריטים</span>
                 <span>• {board.followerCount || 0} עוקבים</span>
               </div>
             </div>

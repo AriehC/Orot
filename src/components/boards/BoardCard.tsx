@@ -23,7 +23,6 @@ export default function BoardCard({ board, isLiked, isFollowed, onLike, onFollow
           <div className={styles.titleRow}>
             <h3 className={styles.name} style={{ color: board.color }}>{board.name}</h3>
             {isMainBoard && <span className={styles.mainBadge}>ראשי</span>}
-            {!board.isPublic && <span className={styles.privateBadge}>פרטי</span>}
           </div>
           {board.description && (
             <p className={styles.description}>{board.description}</p>
