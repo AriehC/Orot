@@ -57,7 +57,8 @@ export default function ProfileClient({ userId, initialProfile, initialBoards }:
         toast.error("שגיאה בטעינת הפרופיל");
         setLoading(false);
       });
-    getUserBoards(userId)
+    // Visitors may only list public boards (rules reject an unfiltered query)
+    getUserBoards(userId, user?.uid !== userId)
       .then(setBoards)
       .catch((error) => {
         console.error("ProfileClient: failed to load boards:", error);

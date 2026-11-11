@@ -28,6 +28,21 @@ service cloud.firestore {
       return incomingData().diff(existingData()).affectedKeys().hasOnly(fields);
     }
 
+    // Counters are denormalized and bumped from the client, one step at a time
+    function stepOk(field) {
+      return math.abs(incomingData().get(field, 0) - existingData().get(field, 0)) <= 1;
+    }
+
+    function isPostAuthor(postId) {
+      return isAuth()
+        && get(/databases/$(database)/documents/posts/$(postId)).data.authorId == request.auth.uid;
+    }
+
+    function isBoardOwner(boardId) {
+      return isAuth()
+        && get(/databases/$(database)/documents/boards/$(boardId)).data.ownerId == request.auth.uid;
+    }
+
     // --- Users ---
     match /users/{userId} {
       allow read: if true;
@@ -37,13 +52,22 @@ service cloud.firestore {
         && isValidString(incomingData().displayName, 50)
         && incomingData().followerCount == 0
         && incomingData().followingCount == 0;
-      allow update: if isOwner(userId)
-        && !('email' in incomingData())
-        && isValidString(incomingData().displayName, 50)
-        && (!('bio' in incomingData()) || isValidString(incomingData().bio, 500))
-        // Prevent self-manipulation of social counters
-        && incomingData().followerCount == existingData().followerCount
-        && incomingData().followingCount == existingData().followingCount;
+      allow update: if (
+        // Owner edits their profile — but not the social counters
+        isOwner(userId)
+          && !('email' in incomingData())
+          && isValidString(incomingData().displayName, 50)
+          && (!('bio' in incomingData()) || isValidString(incomingData().bio, 500))
+          && incomingData().followerCount == existingData().followerCount
+          && incomingData().followingCount == existingData().followingCount
+      ) || (
+        // Follow / unfollow: either side's counter moves by one, nothing else changes
+        isAuth()
+          && onlyChanged(['followerCount', 'followingCount'])
+          && stepOk('followerCount')
+          && stepOk('followingCount')
+      );
+      allow delete: if isOwner(userId);
     }
 
     // --- Posts ---
@@ -65,6 +89,8 @@ service cloud.firestore {
           && incomingData().authorId == existingData().authorId
         ||
         onlyChanged(['likeCount', 'saveCount', 'boardCount', 'commentCount'])
+          && stepOk('likeCount') && stepOk('saveCount')
+          && stepOk('boardCount') && stepOk('commentCount')
       );
     }
 
@@ -73,7 +99,9 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuth()
         && incomingData().userId == request.auth.uid;
-      allow delete: if isOwner(existingData().userId);
+      // The post's author may clear likes when deleting the post
+      allow delete: if isOwner(existingData().userId)
+        || isPostAuthor(existingData().postId);
     }
 
     // --- Saves ---
@@ -81,7 +109,8 @@ service cloud.firestore {
       allow read: if isAuth();
       allow create: if isAuth()
         && incomingData().userId == request.auth.uid;
-      allow delete: if isOwner(existingData().userId);
+      allow delete: if isOwner(existingData().userId)
+        || isPostAuthor(existingData().postId);
     }
 
     // --- Boards ---
@@ -94,16 +123,27 @@ service cloud.firestore {
         && (!('description' in incomingData()) || isValidString(incomingData().description, 500))
         && incomingData().likeCount == 0
         && incomingData().followerCount == 0;
-      allow update: if isOwner(existingData().ownerId)
-        && incomingData().ownerId == existingData().ownerId;
+      allow update: if (
+        isOwner(existingData().ownerId)
+          && incomingData().ownerId == existingData().ownerId
+      ) || (
+        // Likes, follows, and a post being removed from the board by its author
+        isAuth()
+          && onlyChanged(['likeCount', 'followerCount', 'itemCount'])
+          && stepOk('likeCount') && stepOk('followerCount') && stepOk('itemCount')
+      );
       allow delete: if isOwner(existingData().ownerId);
     }
 
     // --- Board Items ---
     match /boardItems/{itemId} {
       allow read: if isAuth();
-      allow create: if isAuth();
-      allow delete: if isAuth();
+      allow create: if isAuth()
+        && incomingData().addedBy == request.auth.uid
+        && isBoardOwner(incomingData().boardId);
+      allow delete: if isOwner(existingData().addedBy)
+        || isBoardOwner(existingData().boardId)
+        || isPostAuthor(existingData().postId);
     }
 
     // --- Board Likes ---
@@ -111,7 +151,8 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuth()
         && incomingData().userId == request.auth.uid;
-      allow delete: if isOwner(existingData().userId);
+      allow delete: if isOwner(existingData().userId)
+        || isBoardOwner(existingData().boardId);
     }
 
     // --- Board Follows ---
@@ -119,19 +160,23 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuth()
         && incomingData().userId == request.auth.uid;
-      allow delete: if isOwner(existingData().userId);
+      allow delete: if isOwner(existingData().userId)
+        || isBoardOwner(existingData().boardId);
     }
 
     // --- User Follows ---
     match /userFollows/{followId} {
       allow read: if true;
+      // Field names match the app: followerId follows followingId
       allow create: if isAuth()
-        && incomingData().userId == request.auth.uid
-        && incomingData().followedUserId != request.auth.uid;
-      allow delete: if isOwner(existingData().userId);
+        && incomingData().followerId == request.auth.uid
+        && incomingData().followingId is string
+        && incomingData().followingId != request.auth.uid;
+      // Either side may remove the relationship (unfollow, or account deletion)
+      allow delete: if isOwner(existingData().followerId)
+        || isOwner(existingData().followingId);
     }
 
-    // --- Tags ---
     // --- Comments (public, like posts) ---
     match /comments/{commentId} {
       allow read: if true;
@@ -139,7 +184,9 @@ service cloud.firestore {
         && incomingData().authorId == request.auth.uid
         && incomingData().postId is string
         && isValidString(incomingData().body, 1000);
-      allow delete: if isOwner(existingData().authorId);
+      // The post's author may remove comments on their post
+      allow delete: if isOwner(existingData().authorId)
+        || isPostAuthor(existingData().postId);
     }
 
     // --- Notifications (private to the recipient) ---

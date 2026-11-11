@@ -8,7 +8,7 @@ import { initializeApp, deleteApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, createUserWithEmailAndPassword, Auth } from "firebase/auth";
 import {
   getFirestore, connectFirestoreEmulator, doc, setDoc, updateDoc, getDoc,
-  deleteField, Timestamp, increment, Firestore,
+  deleteField, deleteDoc, writeBatch, Timestamp, increment, Firestore,
 } from "firebase/firestore";
 
 const PROJECT = "demo-orot";
@@ -131,6 +131,76 @@ async function main() {
   await expectDenied("someone else reads it", () => getDoc(doc(b.db, "notifications", `n-${b.uid}`)));
   await expectOk("recipient marks it read", () => updateDoc(doc(a.db, "notifications", `n-${b.uid}`), { read: true }));
   await expectDenied("recipient rewrites its content", () => updateDoc(doc(a.db, "notifications", `n-${b.uid}`), { actorName: "זיוף" }));
+
+  console.log("Following users");
+  await setDoc(doc(b.db, "users", b.uid), profile());
+  const followId = `f-${b.uid}`;
+  await expectOk("follow a user", () =>
+    setDoc(doc(b.db, "userFollows", followId), { followerId: b.uid, followingId: a.uid, createdAt: Timestamp.now() }));
+  await expectDenied("follow on someone else's behalf", () =>
+    setDoc(doc(b.db, "userFollows", `f2-${b.uid}`), { followerId: a.uid, followingId: b.uid, createdAt: Timestamp.now() }));
+  await expectDenied("follow yourself", () =>
+    setDoc(doc(b.db, "userFollows", `f3-${b.uid}`), { followerId: b.uid, followingId: b.uid, createdAt: Timestamp.now() }));
+  await expectOk("both counters move by one (batch)", () => {
+    const batch = writeBatch(b.db);
+    batch.update(doc(b.db, "users", a.uid), { followerCount: increment(1) });
+    batch.update(doc(b.db, "users", b.uid), { followingCount: increment(1) });
+    return batch.commit();
+  });
+  await expectDenied("inflate someone's follower count", () => updateDoc(doc(b.db, "users", a.uid), { followerCount: increment(50) }));
+  await expectDenied("edit someone's bio via the counter path", () =>
+    updateDoc(doc(b.db, "users", a.uid), { followerCount: increment(1), bio: "פריצה" }));
+  await expectOk("profile edit still works after being followed", () =>
+    updateDoc(doc(a.db, "users", a.uid), { bio: "עדכון", email: deleteField(), updatedAt: Timestamp.now() }));
+  await expectOk("followed user removes the relationship", () => deleteDoc(doc(a.db, "userFollows", followId)));
+
+  console.log("Boards");
+  const boardId = `board-${a.uid}`;
+  const board = (uid: string, isPublic: boolean) => ({
+    name: "לוח", description: "", color: "#C17B4A", ownerId: uid, ownerName: "בודק", ownerPhotoURL: null,
+    isPublic, itemCount: 0, likeCount: 0, followerCount: 0, coverImageURL: null,
+    createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
+  });
+  await expectOk("create a public board", () => setDoc(doc(a.db, "boards", boardId), board(a.uid, true)));
+  await expectOk("owner adds a post to the board", () =>
+    setDoc(doc(a.db, "boardItems", `bi-${a.uid}`), { boardId, postId, addedBy: a.uid, addedAt: Timestamp.now() }));
+  await expectDenied("add a post to someone else's board", () =>
+    setDoc(doc(b.db, "boardItems", `bi-${b.uid}`), { boardId, postId, addedBy: b.uid, addedAt: Timestamp.now() }));
+  await expectOk("like a board", () =>
+    setDoc(doc(b.db, "boardLikes", `bl-${b.uid}`), { boardId, userId: b.uid, createdAt: Timestamp.now() }));
+  await expectOk("non-owner bumps board likeCount", () => updateDoc(doc(b.db, "boards", boardId), { likeCount: increment(1) }));
+  await expectOk("follow a board", () =>
+    setDoc(doc(b.db, "boardFollows", `bf-${b.uid}`), { boardId, userId: b.uid, createdAt: Timestamp.now() }));
+  await expectOk("non-owner bumps board followerCount", () => updateDoc(doc(b.db, "boards", boardId), { followerCount: increment(1) }));
+  await expectDenied("non-owner renames the board", () => updateDoc(doc(b.db, "boards", boardId), { name: "פריצה" }));
+  await expectDenied("non-owner inflates board likes", () => updateDoc(doc(b.db, "boards", boardId), { likeCount: increment(10) }));
+  await expectOk("board owner clears others' likes and follows (board deletion)", () => {
+    const batch = writeBatch(a.db);
+    batch.delete(doc(a.db, "boardLikes", `bl-${b.uid}`));
+    batch.delete(doc(a.db, "boardFollows", `bf-${b.uid}`));
+    return batch.commit();
+  });
+
+  console.log("Deleting a post that others interacted with");
+  const likeIds = Array.from({ length: 25 }, (_, i) => `like-${b.uid}-${i}`);
+  for (const id of likeIds) await setDoc(doc(b.db, "likes", id), { postId, userId: b.uid, createdAt: Timestamp.now() });
+  await setDoc(doc(b.db, "saves", `s-${b.uid}`), { postId, userId: b.uid, createdAt: Timestamp.now() });
+  await expectDenied("a stranger deletes someone's like", async () => {
+    const c = await client("carol");
+    try { await deleteDoc(doc(c.db, "likes", likeIds[0])); } finally { await c.close(); }
+  });
+  await expectOk("post author clears 25 likes in one batch", () => {
+    const batch = writeBatch(a.db);
+    likeIds.forEach((id) => batch.delete(doc(a.db, "likes", id)));
+    return batch.commit();
+  });
+  await expectOk("post author clears saves and comments", () => {
+    const batch = writeBatch(a.db);
+    batch.delete(doc(a.db, "saves", `s-${b.uid}`));
+    batch.delete(doc(a.db, "comments", `c-${b.uid}`));
+    return batch.commit();
+  });
+  await expectOk("post author removes the post from boards", () => deleteDoc(doc(a.db, "boardItems", `bi-${a.uid}`)));
 
   await a.close();
   await b.close();

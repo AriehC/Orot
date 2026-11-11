@@ -20,7 +20,8 @@ export default function ProfileHero({
   isOwnProfile,
   onEditClick,
 }: ProfileHeroProps) {
-  const { following, handleToggleFollow } = useUserFollow(profile.id);
+  const { following, followerDelta, handleToggleFollow } = useUserFollow(profile.id);
+  const followerCount = Math.max(0, profile.followerCount + followerDelta);
   const initials = profile.displayName?.charAt(0) || "א";
 
   return (
@@ -70,8 +71,8 @@ export default function ProfileHero({
 
         {/* Stats */}
         <div className={styles.stats}>
-          <div className={styles.statItem} aria-label={`${profile.followerCount} עוקבים`}>
-            <span className={styles.statNumber}>{profile.followerCount}</span>
+          <div className={styles.statItem} aria-label={`${followerCount} עוקבים`}>
+            <span className={styles.statNumber}>{followerCount}</span>
             <span className={styles.statLabel}>עוקבים</span>
           </div>
           <div className={styles.statDivider} />

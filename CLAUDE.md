@@ -78,5 +78,7 @@ npm run test:rules      # security-rules checks against the emulator
 - SSR data (`firestore-server.ts`) has timestamps as plain `{seconds, nanoseconds}` — use `timestampMillis()` from utils, never `.toMillis()` directly
 - Don't use `firebase-admin` in app code: Turbopack externalises it under a hashed alias in `.next/node_modules`, which Firebase Functions deploys drop (it's a devDependency, for scripts only)
 - Firebase frameworks backend needs `engines.node` ≥ 22 in package.json (Node 20 runtime is decommissioned)
+- Rules field names must match the code (`userFollows` uses `followerId`/`followingId`); counters may move ±1 per write by any signed-in user; cascade deletes rely on `isPostAuthor`/`isBoardOwner` — run `npm run test:rules` after touching rules
+- Listing another user's boards must filter `isPublic == true` or the query is rejected
 - Every collection the client listens to needs a rule — a denied `onSnapshot` crashes the Firestore SDK for the whole page ("INTERNAL ASSERTION FAILED ca9")
 - Board/post counts are denormalized — update `boardCount`, `likeCount`, `followerCount` etc. on both the document and the relation
